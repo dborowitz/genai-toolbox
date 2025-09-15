@@ -125,7 +125,24 @@ func (t Tool) Invoke(ctx context.Context, params tools.ParamValues, accessToken 
 		clusters = append(clusters, resp)
 	}
 
-	return clusters, nil
+	type SimpleCluster struct {
+		Name  string `json:"name"`
+		State string `json:"state,omitempty"`
+	}
+
+	simpleClusters := make([]SimpleCluster, 0, len(clusters))
+	for _, cluster := range clusters {
+		state := ""
+		if cluster.Status != nil {
+			state = cluster.Status.State.String()
+		}
+		simpleClusters = append(simpleClusters, SimpleCluster{
+			Name:  cluster.ClusterName,
+			State: state,
+		})
+	}
+
+	return simpleClusters, nil
 }
 
 // ParseParams parses and validates the input parameters.
