@@ -35,6 +35,7 @@ var expectedToolSources = []string{
 	"cloud-sql-postgres-admin",
 	"cloud-sql-postgres-observability",
 	"cloud-sql-postgres",
+	"dataproc",
 	"dataplex",
 	"firestore",
 	"looker",
@@ -106,6 +107,7 @@ func TestGetPrebuiltTool(t *testing.T) {
 	cloudsqlmysql_config, _ := Get("cloud-sql-mysql")
 	cloudsqlmssql_observability_config, _ := Get("cloud-sql-mssql-observability")
 	cloudsqlmssql_config, _ := Get("cloud-sql-mssql")
+	dataproc_config, _ := Get("dataproc")
 	dataplex_config, _ := Get("dataplex")
 	firestoreconfig, _ := Get("firestore")
 	mysql_config, _ := Get("mysql")
@@ -157,6 +159,9 @@ func TestGetPrebuiltTool(t *testing.T) {
 	}
 	if len(cloudsqlmssql_config) <= 0 {
 		t.Fatalf("unexpected error: could not fetch cloud sql mssql prebuilt tools yaml")
+	}
+	if len(dataproc_config) <= 0 {
+		t.Fatalf("unexpected error: could not fetch dataproc prebuilt tools yaml")
 	}
 	if len(dataplex_config) <= 0 {
 		t.Fatalf("unexpected error: could not fetch dataplex prebuilt tools yaml")

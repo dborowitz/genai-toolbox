@@ -1240,6 +1240,7 @@ func TestPrebuiltTools(t *testing.T) {
 	cloudsqlmssql_config, _ := prebuiltconfigs.Get("cloud-sql-mssql")
 	cloudsqlmssql_admin_config, _ := prebuiltconfigs.Get("cloud-sql-mssql-admin")
 	dataplex_config, _ := prebuiltconfigs.Get("dataplex")
+	dataproc_config, _ := prebuiltconfigs.Get("dataproc")
 	firestoreconfig, _ := prebuiltconfigs.Get("firestore")
 	mysql_config, _ := prebuiltconfigs.Get("mysql")
 	mssql_config, _ := prebuiltconfigs.Get("mssql")
@@ -1303,6 +1304,9 @@ func TestPrebuiltTools(t *testing.T) {
 	t.Setenv("CLOUD_SQL_MSSQL_USER", "your_cloudsql_mssql_user")
 	t.Setenv("CLOUD_SQL_MSSQL_PASSWORD", "your_cloudsql_mssql_password")
 	t.Setenv("CLOUD_SQL_POSTGRES_PASSWORD", "your_cloudsql_pg_password")
+
+	t.Setenv("DATAPROC_PROJECT", "your_gcp_project_id")
+	t.Setenv("DATAPROC_REGION", "your_gcp_region")
 
 	t.Setenv("POSTGRES_HOST", "localhost")
 	t.Setenv("POSTGRES_PORT", "5432")
@@ -1450,6 +1454,16 @@ func TestPrebuiltTools(t *testing.T) {
 				"dataplex_tools": tools.ToolsetConfig{
 					Name:      "dataplex_tools",
 					ToolNames: []string{"search_entries", "lookup_entry", "search_aspect_types"},
+				},
+			},
+		},
+		{
+			name: "dataproc prebuilt tools",
+			in:   dataproc_config,
+			wantToolset: server.ToolsetConfigs{
+				"dataproc_tools": tools.ToolsetConfig{
+					Name:      "dataproc_tools",
+					ToolNames: []string{"list_clusters"},
 				},
 			},
 		},
