@@ -106,8 +106,8 @@ type Tool struct {
 	mcpManifest tools.McpManifest
 }
 
-// Batch represents a single batch job.
-type Batch struct {
+// apiBatch represents a single batch job from the API.
+type apiBatch struct {
 	Name       string `json:"name"`
 	UUID       string `json:"uuid"`
 	State      string `json:"state"`
@@ -115,10 +115,10 @@ type Batch struct {
 	CreateTime string `json:"createTime"`
 }
 
-// ListBatchesResponse is the response from the list batches API.
-type ListBatchesResponse struct {
-	Batches       []Batch `json:"batches"`
-	NextPageToken string  `json:"nextPageToken"`
+// apiListBatchesResponse is the response from the list batches API.
+type apiListBatchesResponse struct {
+	Batches       []apiBatch `json:"batches"`
+	NextPageToken string     `json:"nextPageToken"`
 }
 
 // Invoke executes the tool's operation.
@@ -146,12 +146,33 @@ func (t Tool) Invoke(ctx context.Context, params tools.ParamValues, accessToken 
 		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
-	var listResponse ListBatchesResponse
+	var listResponse apiListBatchesResponse
 	if err := json.NewDecoder(resp.Body).Decode(&listResponse); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
 
-	return listResponse, nil
+	type SimpleBatch struct {
+		Name       string `json:"name"`
+		UUID       string `json:"uuid"`
+		State      string `json:"state"`
+		Creator    string `json:"creator"`
+		CreateTime string `json:"createTime"`
+	}
+
+	simpleBatches := make([]SimpleBatch, 0, len(listResponse.Batches))
+	for _, batch := range listResponse.Batches {
+		simpleBatches = append(simpleBatches, SimpleBatch(batch))
+	}
+
+	type SimpleListBatchesResponse struct {
+		Batches       []SimpleBatch `json:"batches"`
+		NextPageToken string        `json:"nextPageToken,omitempty"`
+	}
+
+	return SimpleListBatchesResponse{
+		Batches:       simpleBatches,
+		NextPageToken: listResponse.NextPageToken,
+	}, nil
 }
 
 // ParseParams parses and validates the input parameters.
