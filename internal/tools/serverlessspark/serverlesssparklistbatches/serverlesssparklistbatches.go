@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/goccy/go-yaml"
 	"github.com/googleapis/genai-toolbox/internal/sources"
@@ -76,8 +77,9 @@ func (cfg Config) Initialize(srcs map[string]sources.Source) (tools.Tool, error)
 		desc = "Lists available Serverless Spark (aka Dataproc Serverless) batches"
 	}
 
-	// An empty parameters object will generate the correct empty schema.
-	allParameters := tools.Parameters{}
+	allParameters := tools.Parameters{
+		tools.NewStringParameterWithRequired("filter", `Filter expression to limit the batches. Filters are case sensitive, and may contain multiple clauses combined with logical operators (AND/OR, case sensitive). Supported fields are batch_id, batch_uuid, state, create_time, and labels. e.g. state = RUNNING AND create_time < "2023-01-01T00:00:00Z" filters for batches in state RUNNING that were created before 2023-01-01. state = RUNNING AND labels.environment=production filters for batches in state in a RUNNING state that have a production environment label. Valid states are STATE_UNSPECIFIED, PENDING, RUNNING, CANCELLING, CANCELLED, SUCCEEDED, FAILED. Valid operators are < > <= >= = !=, and : as "has" for labels, meaning any non-empty value)`, false),
+	}
 
 	mcpManifest := tools.McpManifest{
 		Name:        cfg.Name,
@@ -89,6 +91,7 @@ func (cfg Config) Initialize(srcs map[string]sources.Source) (tools.Tool, error)
 		Name:        cfg.Name,
 		Kind:        kind,
 		Source:      ds,
+		AllParams:   allParameters,
 		manifest:    tools.Manifest{Description: desc, Parameters: allParameters.Manifest()},
 		mcpManifest: mcpManifest,
 	}, nil
@@ -99,8 +102,8 @@ type Tool struct {
 	Name        string `yaml:"name"`
 	Kind        string `yaml:"kind"`
 	Description string `yaml:"description"`
-
-	Source *serverlessspark.Source
+	Source      *serverlessspark.Source
+	AllParams   tools.Parameters
 
 	manifest    tools.Manifest
 	mcpManifest tools.McpManifest
@@ -123,8 +126,20 @@ type apiListBatchesResponse struct {
 
 // Invoke executes the tool's operation.
 func (t Tool) Invoke(ctx context.Context, params tools.ParamValues, accessToken tools.AccessToken) (any, error) {
-	url := fmt.Sprintf("%s/v1/projects/%s/locations/%s/batches", t.Source.BaseURL, t.Source.Project, t.Source.Location)
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	urlString := fmt.Sprintf("%s/v1/projects/%s/locations/%s/batches", t.Source.BaseURL, t.Source.Project, t.Source.Location)
+	u, err := url.Parse(urlString)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing URL %s: %w", urlString, err)
+	}
+	filter, ok := params.AsMap()["filter"].(string)
+	if ok {
+		q := u.Query()
+		q.Add("filter", filter)
+		u.RawQuery = q.Encode()
+		urlString = u.String()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", urlString, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
@@ -177,7 +192,7 @@ func (t Tool) Invoke(ctx context.Context, params tools.ParamValues, accessToken 
 
 // ParseParams parses and validates the input parameters.
 func (t Tool) ParseParams(data map[string]any, claims map[string]map[string]any) (tools.ParamValues, error) {
-	return nil, nil
+	return tools.ParseParams(t.AllParams, data, claims)
 }
 
 // Manifest returns the tool's manifest.
