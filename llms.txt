@@ -50,23 +50,26 @@ List of reference documentation for resources in Toolbox.
   - [Google Sign-In](https://dborowitz.github.io/genai-toolbox/resources/authservices/google/): Use Google Sign-In for Oauth 2.0 flow and token lifecycle.
 - [Sources](https://dborowitz.github.io/genai-toolbox/resources/sources/): Sources represent your different data sources that a tool can interact with.
   - [AlloyDB for PostgreSQL](https://dborowitz.github.io/genai-toolbox/resources/sources/alloydb-pg/): AlloyDB for PostgreSQL is a fully-managed, PostgreSQL-compatible database for demanding transactional workloads.
+  - [AlloyDB Admin](https://dborowitz.github.io/genai-toolbox/resources/sources/alloydb-admin/): The "alloydb-admin" source provides a client for the AlloyDB API.
   - [BigQuery](https://dborowitz.github.io/genai-toolbox/resources/sources/bigquery/): BigQuery is Google Cloud's fully managed, petabyte-scale, and cost-effective analytics data warehouse that lets you run analytics over vast amounts of  data in near real time. With BigQuery, there's no infrastructure to set  up or manage, letting you focus on finding meaningful insights using  GoogleSQL and taking advantage of flexible pricing models across on-demand  and flat-rate options.
   - [Bigtable](https://dborowitz.github.io/genai-toolbox/resources/sources/bigtable/): Bigtable is a low-latency NoSQL database service for machine learning, operational analytics, and user-facing operations. It's a wide-column, key-value store that can scale to billions of rows and thousands of columns. With Bigtable, you can replicate your data to regions across the world for high availability and data resiliency.
   - [Cassandra](https://dborowitz.github.io/genai-toolbox/resources/sources/cassandra/): Apache Cassandra is a NoSQL distributed database known for its horizontal scalability, distributed architecture, and flexible schema definition.
   - [ClickHouse](https://dborowitz.github.io/genai-toolbox/resources/sources/clickhouse/): ClickHouse is an open-source, OLTP database.
+  - [Cloud Healthcare API](https://dborowitz.github.io/genai-toolbox/resources/sources/cloud-healthcare/): The Cloud Healthcare API provides a managed solution for storing and accessing healthcare data in Google Cloud, providing a critical bridge  between existing care systems and applications hosted on Google Cloud.
   - [Cloud Monitoring](https://dborowitz.github.io/genai-toolbox/resources/sources/cloud-monitoring/): A "cloud-monitoring" source provides a client for the Cloud Monitoring API.
   - [Cloud SQL for MySQL](https://dborowitz.github.io/genai-toolbox/resources/sources/cloud-sql-mysql/): Cloud SQL for MySQL is a fully-managed database service for MySQL.
   - [Cloud SQL for PostgreSQL](https://dborowitz.github.io/genai-toolbox/resources/sources/cloud-sql-pg/): Cloud SQL for PostgreSQL is a fully-managed database service for Postgres.
   - [Cloud SQL for SQL Server](https://dborowitz.github.io/genai-toolbox/resources/sources/cloud-sql-mssql/): Cloud SQL for SQL Server is a fully-managed database service for SQL Server.
   - [Cloud SQL Admin](https://dborowitz.github.io/genai-toolbox/resources/sources/cloud-sql-admin/): A "cloud-sql-admin" source provides a client for the Cloud SQL Admin API.
-  - [couchbase](https://dborowitz.github.io/genai-toolbox/resources/sources/couchbase/): A "couchbase" source connects to a Couchbase database.
+  - [Couchbase](https://dborowitz.github.io/genai-toolbox/resources/sources/couchbase/): A "couchbase" source connects to a Couchbase database.
   - [Dataplex](https://dborowitz.github.io/genai-toolbox/resources/sources/dataplex/): Dataplex Universal Catalog is a unified, intelligent governance solution for data and AI assets in Google Cloud. Dataplex Universal Catalog powers AI, analytics, and business intelligence at scale.
   - [Dgraph](https://dborowitz.github.io/genai-toolbox/resources/sources/dgraph/): Dgraph is fully open-source, built-for-scale graph database for Gen AI workloads
+  - [Elasticsearch](https://dborowitz.github.io/genai-toolbox/resources/sources/elasticsearch/): Elasticsearch is a distributed, free and open search and analytics engine  for all types of data, including textual, numerical, geospatial, structured,  and unstructured.
   - [Firebird](https://dborowitz.github.io/genai-toolbox/resources/sources/firebird/): Firebird is a powerful, cross-platform, and open-source relational database.
   - [Firestore](https://dborowitz.github.io/genai-toolbox/resources/sources/firestore/): Firestore is a NoSQL document database built for automatic scaling, high performance, and ease of application development. It's a fully managed, serverless database that supports mobile, web, and server development.
   - [HTTP](https://dborowitz.github.io/genai-toolbox/resources/sources/http/): The HTTP source enables the Toolbox to retrieve data from a remote server using HTTP requests.
   - [Looker](https://dborowitz.github.io/genai-toolbox/resources/sources/looker/): Looker is a business intelligence tool that also provides a semantic layer.
-  - [MindsDB](https://dborowitz.github.io/genai-toolbox/resources/sources/mindsdb/): MindsDB is the most widely adopted AI federated database that enables SQL queries across hundreds of datasources and ML models.
+  - [MindsDB](https://dborowitz.github.io/genai-toolbox/resources/sources/mindsdb/): MindsDB is an AI federated database that enables SQL queries across hundreds of datasources and ML models.
   - [MongoDB](https://dborowitz.github.io/genai-toolbox/resources/sources/mongodb/): MongoDB is a no-sql data platform that can not only serve general purpose data requirements also perform VectorSearch where both operational data and embeddings used of search can reside in same document.
   - [MySQL](https://dborowitz.github.io/genai-toolbox/resources/sources/mysql/): MySQL is a relational database management system that stores and manages data.
   - [Neo4j](https://dborowitz.github.io/genai-toolbox/resources/sources/neo4j/): Neo4j is a powerful, open source graph database system
@@ -75,6 +78,7 @@ List of reference documentation for resources in Toolbox.
   - [PostgreSQL](https://dborowitz.github.io/genai-toolbox/resources/sources/postgres/): PostgreSQL is a powerful, open source object-relational database.
   - [Redis](https://dborowitz.github.io/genai-toolbox/resources/sources/redis/): Redis is a in-memory data structure store.
   - [Serverless for Apache Spark](https://dborowitz.github.io/genai-toolbox/resources/sources/serverless-spark/): Google Cloud Serverless for Apache Spark lets you run Spark workloads without requiring you to provision and manage your own Spark cluster.
+  - [SingleStore](https://dborowitz.github.io/genai-toolbox/resources/sources/singlestore/): SingleStore is the cloud-native database built with speed and scale to power data-intensive applications.
   - [Spanner](https://dborowitz.github.io/genai-toolbox/resources/sources/spanner/): Spanner is a fully managed database service from Google Cloud that combines  relational, key-value, graph, and search capabilities.
   - [SQL Server](https://dborowitz.github.io/genai-toolbox/resources/sources/mssql/): SQL Server is a relational database management system (RDBMS).
   - [SQLite](https://dborowitz.github.io/genai-toolbox/resources/sources/sqlite/): SQLite is a C-language library that implements a small, fast, self-contained,  high-reliability, full-featured, SQL database engine.
@@ -82,7 +86,6 @@ List of reference documentation for resources in Toolbox.
   - [Trino](https://dborowitz.github.io/genai-toolbox/resources/sources/trino/): Trino is a distributed SQL query engine for big data analytics.
   - [Valkey](https://dborowitz.github.io/genai-toolbox/resources/sources/valkey/): Valkey is an open-source, in-memory data structure store, forked from Redis.
   - [YugabyteDB](https://dborowitz.github.io/genai-toolbox/resources/sources/yugabytedb/): YugabyteDB is a high-performance, distributed SQL database. 
-  - [AlloyDB Admin](https://dborowitz.github.io/genai-toolbox/resources/sources/alloydb-admin/): The "alloydb-admin" source provides a client for the AlloyDB API.
 - [Tools](https://dborowitz.github.io/genai-toolbox/resources/tools/): Tools define actions an agent can take -- such as reading and writing to a source.
   - [AlloyDB AI NL](https://dborowitz.github.io/genai-toolbox/resources/tools/alloydbainl/): AlloyDB AI NL Tool.
   - [AlloyDB for PostgreSQL](https://dborowitz.github.io/genai-toolbox/resources/tools/alloydb/): Tools for AlloyDB for PostgreSQL.
@@ -90,12 +93,14 @@ List of reference documentation for resources in Toolbox.
   - [Bigtable](https://dborowitz.github.io/genai-toolbox/resources/tools/bigtable/): Tools that work with Bigtable Sources.
   - [Cassandra](https://dborowitz.github.io/genai-toolbox/resources/tools/cassandra/): Tools that work with Cassandra Sources.
   - [ClickHouse](https://dborowitz.github.io/genai-toolbox/resources/tools/clickhouse/): Tools for interacting with ClickHouse databases and tables.
+  - [Cloud Healthcare API](https://dborowitz.github.io/genai-toolbox/resources/tools/cloudhealthcare/): Tools that work with Cloud Healthcare Sources.
   - [Cloud Monitoring](https://dborowitz.github.io/genai-toolbox/resources/tools/cloudmonitoring/): Tools that work with Cloud Monitoring source.
   - [Cloud SQL](https://dborowitz.github.io/genai-toolbox/resources/tools/cloudsql/): Tools that work with Cloud SQL. 
   - [Couchbase](https://dborowitz.github.io/genai-toolbox/resources/tools/couchbase/): Tools that work with Couchbase Sources.
   - [Dataform](https://dborowitz.github.io/genai-toolbox/resources/tools/dataform/): Tools that work with Dataform.
   - [Dataplex](https://dborowitz.github.io/genai-toolbox/resources/tools/dataplex/): Tools that work with Dataplex Sources.
   - [Dgraph](https://dborowitz.github.io/genai-toolbox/resources/tools/dgraph/): Tools that work with Dgraph Sources.
+  - [Elasticsearch](https://dborowitz.github.io/genai-toolbox/resources/tools/elasticsearch/): Tools that work with Elasticsearch Sources.
   - [Firebird](https://dborowitz.github.io/genai-toolbox/resources/tools/firebird/): Tools that work with Firebird Sources.
   - [Firestore](https://dborowitz.github.io/genai-toolbox/resources/tools/firestore/): Tools that work with Firestore Sources.
   - [HTTP](https://dborowitz.github.io/genai-toolbox/resources/tools/http/): Tools that work with HTTP Sources.
@@ -109,6 +114,7 @@ List of reference documentation for resources in Toolbox.
   - [Postgres](https://dborowitz.github.io/genai-toolbox/resources/tools/postgres/): Tools that work with Postgres Sources, such as Cloud SQL for Postgres and AlloyDB. 
   - [Redis](https://dborowitz.github.io/genai-toolbox/resources/tools/redis/): Tools that work with Redis Sources.
   - [Serverless for Apache Spark](https://dborowitz.github.io/genai-toolbox/resources/tools/serverless-spark/): Tools that work with Google Cloud Serverless for Apache Spark Sources.
+  - [SingleStore](https://dborowitz.github.io/genai-toolbox/resources/tools/singlestore/): Tools that work with SingleStore Sources
   - [Spanner](https://dborowitz.github.io/genai-toolbox/resources/tools/spanner/): Tools that work with Spanner Sources.
   - [SQL Server](https://dborowitz.github.io/genai-toolbox/resources/tools/mssql/): Tools that work with SQL Server Sources, such as CloudSQL for SQL Server.
   - [SQLite](https://dborowitz.github.io/genai-toolbox/resources/tools/sqlite/): Tools that work with SQLite Sources.
@@ -117,6 +123,8 @@ List of reference documentation for resources in Toolbox.
   - [Utility tools](https://dborowitz.github.io/genai-toolbox/resources/tools/utility/): Tools that provide utility.
   - [Valkey](https://dborowitz.github.io/genai-toolbox/resources/tools/valkey/): Tools that work with Valkey Sources.
   - [YugabyteDB](https://dborowitz.github.io/genai-toolbox/resources/tools/yuagbytedb/): Tools that work with Valkey Sources.
+- [Prompts](https://dborowitz.github.io/genai-toolbox/resources/prompts/): Prompts allow servers to provide structured messages and instructions for interacting with language models.
+  - [Custom](https://dborowitz.github.io/genai-toolbox/resources/prompts/custom/): Custom prompts defined by the user.
 
 ### Samples
 
