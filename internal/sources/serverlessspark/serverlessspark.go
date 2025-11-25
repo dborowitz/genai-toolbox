@@ -63,9 +63,13 @@ func (r Config) Initialize(ctx context.Context, tracer trace.Tracer) (sources.So
 		return nil, fmt.Errorf("error in User Agent retrieval: %s", err)
 	}
 	endpoint := fmt.Sprintf("%s-dataproc.googleapis.com:443", r.Location)
-	client, err := dataproc.NewBatchControllerClient(ctx, option.WithEndpoint(endpoint), option.WithUserAgent(ua))
+	batchClient, err := dataproc.NewBatchControllerClient(ctx, option.WithEndpoint(endpoint), option.WithUserAgent(ua))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create dataproc client: %w", err)
+		return nil, fmt.Errorf("failed to create dataproc batch client: %w", err)
+	}
+	sessionTemplateClient, err := dataproc.NewSessionTemplateControllerClient(ctx, option.WithEndpoint(endpoint), option.WithUserAgent(ua))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create dataproc session template client: %w", err)
 	}
 	opsClient, err := longrunning.NewOperationsClient(ctx, option.WithEndpoint(endpoint), option.WithUserAgent(ua))
 	if err != nil {
@@ -74,7 +78,8 @@ func (r Config) Initialize(ctx context.Context, tracer trace.Tracer) (sources.So
 
 	s := &Source{
 		Config:    r,
-		Client:    client,
+		BatchClient:    batchClient,
+		SessionTemplateClient: sessionTemplateClient,
 		OpsClient: opsClient,
 	}
 	return s, nil
@@ -84,7 +89,8 @@ var _ sources.Source = &Source{}
 
 type Source struct {
 	Config
-	Client    *dataproc.BatchControllerClient
+	BatchClient    *dataproc.BatchControllerClient
+	SessionTemplateClient *dataproc.SessionTemplateControllerClient
 	OpsClient *longrunning.OperationsClient
 }
 
@@ -97,7 +103,11 @@ func (s *Source) ToConfig() sources.SourceConfig {
 }
 
 func (s *Source) GetBatchControllerClient() *dataproc.BatchControllerClient {
-	return s.Client
+	return s.BatchClient
+}
+
+func (s *Source) GetSessionTemplateControllerClient() *dataproc.SessionTemplateControllerClient {
+	return s.SessionTemplateClient
 }
 
 func (s *Source) GetOperationsClient(ctx context.Context) (*longrunning.OperationsClient, error) {
@@ -105,7 +115,10 @@ func (s *Source) GetOperationsClient(ctx context.Context) (*longrunning.Operatio
 }
 
 func (s *Source) Close() error {
-	if err := s.Client.Close(); err != nil {
+	if err := s.BatchClient.Close(); err != nil {
+		return err
+	}
+	if err := s.SessionTemplateClient.Close(); err != nil {
 		return err
 	}
 	if err := s.OpsClient.Close(); err != nil {
