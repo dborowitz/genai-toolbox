@@ -100,6 +100,12 @@
  &lt;td>&lt;/td>
  &lt;/tr>
  &lt;tr>
+ &lt;td>&lt;/td>
+ &lt;td>&lt;code>--allowed-origins&lt;/code>&lt;/td>
+ &lt;td>Specifies a list of origins permitted to access this server.&lt;/td>
+ &lt;td>&lt;code>*&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
  &lt;td>&lt;code>-v&lt;/code>&lt;/td>
  &lt;td>&lt;code>--version&lt;/code>&lt;/td>
  &lt;td>version for toolbox&lt;/td>
@@ -701,8 +707,8 @@ access Conversational Analytics.&lt;/li>
 &lt;li>&lt;code>--prebuilt&lt;/code> value: &lt;code>mssql&lt;/code>&lt;/li>
 &lt;li>&lt;strong>Environment Variables:&lt;/strong>
 &lt;ul>
-&lt;li>&lt;code>MSSQL_HOST&lt;/code>: The hostname or IP address of the SQL Server instance.&lt;/li>
-&lt;li>&lt;code>MSSQL_PORT&lt;/code>: The port number for the SQL Server instance.&lt;/li>
+&lt;li>&lt;code>MSSQL_HOST&lt;/code>: (Optional) The hostname or IP address of the SQL Server instance.&lt;/li>
+&lt;li>&lt;code>MSSQL_PORT&lt;/code>: (Optional) The port number for the SQL Server instance.&lt;/li>
 &lt;li>&lt;code>MSSQL_DATABASE&lt;/code>: The name of the database to connect to.&lt;/li>
 &lt;li>&lt;code>MSSQL_USER&lt;/code>: The database username.&lt;/li>
 &lt;li>&lt;code>MSSQL_PASSWORD&lt;/code>: The password for the database user.&lt;/li>
