@@ -641,6 +641,10 @@ See [Usage Examples](../reference/cli.md#examples).
         view serverless batches.
 *   **Tools:**
     *   `list_batches`: Lists Spark batches.
+    *   `get_batch`: Gets a Spark batch.
+    *   `cancel_batch`: Cancels a Spark batch.
+    *   `create_pyspark_batch`: Creates a PySpark batch.
+    *   `create_spark_batch`: Creates a Spark (Java/Scala) batch.
 
 ## Spanner (GoogleSQL dialect)
 
