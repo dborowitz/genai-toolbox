@@ -29,6 +29,8 @@ Apache Spark.
   List and filter Serverless Spark sessions.
 - [`serverless-spark-get-session`](../tools/serverless-spark/serverless-spark-get-session.md)
   Get a Serverless Spark session.
+- [`serverless-spark-get-session-logs`](../tools/serverless-spark/serverless-spark-get-session-logs.md)
+  Get Cloud Logging logs for a Serverless Spark session.
 
 ## Requirements
 

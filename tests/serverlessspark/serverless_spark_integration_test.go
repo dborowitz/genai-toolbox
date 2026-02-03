@@ -122,6 +122,15 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 				"source":       "my-spark",
 				"authRequired": []string{"my-google-auth"},
 			},
+			"get-session-logs": map[string]any{
+				"type":   "serverless-spark-get-session-logs",
+				"source": "my-spark",
+			},
+			"get-session-logs-with-auth": map[string]any{
+				"type":         "serverless-spark-get-session-logs",
+				"source":       "my-spark",
+				"authRequired": []string{"my-google-auth"},
+			},
 			"cancel-batch": map[string]any{
 				"type":   "serverless-spark-cancel-batch",
 				"source": "my-spark",
@@ -378,6 +387,56 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 						request:  map[string]any{"name": missingSessionFullName},
 						wantCode: http.StatusBadRequest,
 						wantMsg:  fmt.Sprintf("name must be a short session name without '/': %s", missingSessionFullName),
+					},
+				}
+				for _, tc := range tcs {
+					t.Run(tc.name, func(t *testing.T) {
+						t.Parallel()
+						testError(t, tc.toolName, tc.request, tc.wantCode, tc.wantMsg)
+					})
+				}
+			})
+		})
+
+		t.Run("get-session-logs", func(t *testing.T) {
+			t.Parallel()
+			// Try to find an existing session to test success case
+			sessions := listSessionsRpc(t, sessionClient, ctx, "", 1, false)
+			if len(sessions) > 0 {
+				fullName := sessions[0].Name
+				t.Run("success", func(t *testing.T) {
+					t.Parallel()
+					runGetSessionLogsTest(t, ctx, fullName)
+				})
+				t.Run("auth", func(t *testing.T) {
+					t.Parallel()
+					runAuthTest(t, "get-session-logs-with-auth", map[string]any{"session_id": shortName(fullName)}, http.StatusOK)
+				})
+			}
+
+			t.Run("errors", func(t *testing.T) {
+				t.Parallel()
+				missingSessionFullName := fmt.Sprintf("projects/%s/locations/%s/sessions/INVALID_SESSION", serverlessSparkProject, serverlessSparkLocation)
+				tcs := []struct {
+					name     string
+					toolName string
+					request  map[string]any
+					wantCode int
+					wantMsg  string
+				}{
+					{
+						name:     "missing session_id",
+						toolName: "get-session-logs",
+						request:  map[string]any{},
+						wantCode: http.StatusBadRequest,
+						wantMsg:  "session_id\\\" is required",
+					},
+					{
+						name:     "full session name",
+						toolName: "get-session-logs",
+						request:  map[string]any{"session_id": missingSessionFullName},
+						wantCode: http.StatusBadRequest,
+						wantMsg:  fmt.Sprintf("session_id must be a short name without '/': %s", missingSessionFullName),
 					},
 				}
 				for _, tc := range tcs {
@@ -1295,5 +1354,50 @@ func runGetSessionTest(t *testing.T, client *dataproc.SessionControllerClient, c
 	if !cmp.Equal(&session, &wantSessionPb, protocmp.Transform()) {
 		diff := cmp.Diff(&session, &wantSessionPb, protocmp.Transform())
 		t.Errorf("GetSession() returned diff (-got +want):\n%s", diff)
+	}
+}
+
+func runGetSessionLogsTest(t *testing.T, ctx context.Context, fullName string) {
+	// Request logs for the session. We don't check the exact content as it's variable,
+	// but we expect the call to succeed and return a list (possibly empty).
+	request := map[string]any{
+		"session_id": shortName(fullName),
+		"limit":      5,
+	}
+	resp, err := invokeTool("get-session-logs", request, nil)
+	if err != nil {
+		t.Fatalf("invokeTool failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("response status code is not 200, got %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var body map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("error parsing response body: %v", err)
+	}
+	result, ok := body["result"].(string)
+	if !ok {
+		t.Fatalf("unable to find result in response body")
+	}
+
+	var logs []map[string]any
+	// Should be unmarshalable to a list of maps
+	if err := json.Unmarshal([]byte(result), &logs); err != nil {
+		t.Fatalf("error unmarshalling result to logs list: %s. Result: %s", err, result)
+	}
+
+	// Just verify structure of one log if present
+	if len(logs) > 0 {
+		logEntry := logs[0]
+		if _, ok := logEntry["logName"]; !ok {
+			t.Errorf("log entry missing logName: %+v", logEntry)
+		}
+		if _, ok := logEntry["timestamp"]; !ok {
+			t.Errorf("log entry missing timestamp: %+v", logEntry)
+		}
 	}
 }

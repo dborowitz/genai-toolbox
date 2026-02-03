@@ -19,10 +19,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	dataproc "cloud.google.com/go/dataproc/v2/apiv1"
 	"cloud.google.com/go/dataproc/v2/apiv1/dataprocpb"
+	logadmin "cloud.google.com/go/logging/logadmin"
 	longrunning "cloud.google.com/go/longrunning/autogen"
 	"cloud.google.com/go/longrunning/autogen/longrunningpb"
 	"github.com/goccy/go-yaml"
@@ -82,12 +84,17 @@ func (r Config) Initialize(ctx context.Context, tracer trace.Tracer) (sources.So
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dataproc session client: %w", err)
 	}
+	logAdminClient, err := logadmin.NewClient(ctx, r.Project, option.WithUserAgent(ua))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create log admin client: %w", err)
+	}
 
 	s := &Source{
-		Config:        r,
-		Client:        client,
-		OpsClient:     opsClient,
-		SessionClient: sessionClient,
+		Config:         r,
+		Client:         client,
+		OpsClient:      opsClient,
+		SessionClient:  sessionClient,
+		LogAdminClient: logAdminClient,
 	}
 	return s, nil
 }
@@ -96,9 +103,10 @@ var _ sources.Source = &Source{}
 
 type Source struct {
 	Config
-	Client        *dataproc.BatchControllerClient
-	OpsClient     *longrunning.OperationsClient
-	SessionClient *dataproc.SessionControllerClient
+	Client         *dataproc.BatchControllerClient
+	OpsClient      *longrunning.OperationsClient
+	SessionClient  *dataproc.SessionControllerClient
+	LogAdminClient *logadmin.Client
 }
 
 func (s *Source) SourceType() string {
@@ -130,7 +138,7 @@ func (s *Source) GetOperationsClient(ctx context.Context) (*longrunning.Operatio
 }
 
 func (s *Source) Close() error {
-	return errors.Join(s.Client.Close(), s.SessionClient.Close(), s.OpsClient.Close())
+	return errors.Join(s.Client.Close(), s.SessionClient.Close(), s.OpsClient.Close(), s.LogAdminClient.Close())
 }
 
 func (s *Source) CancelOperation(ctx context.Context, operation string) (any, error) {
@@ -412,4 +420,126 @@ func ToSessions(sessionPbs []*dataprocpb.Session) ([]Session, error) {
 		sessions = append(sessions, session)
 	}
 	return sessions, nil
+}
+
+// QueryLogsParams contains the parameters for querying logs
+type QueryLogsParams struct {
+	SessionID   string
+	Filter      string
+	NewestFirst bool
+	StartTime   string
+	EndTime     string
+	Verbose     bool
+	Limit       int
+}
+
+func (s *Source) GetSessionLogs(ctx context.Context, params QueryLogsParams) ([]map[string]any, error) {
+	var filterParts []string
+
+	// Session-specific filter
+	var startTime, endTime time.Time
+	var err error
+	if params.StartTime != "" {
+		startTime, err = time.Parse(time.RFC3339, params.StartTime)
+		if err != nil {
+			return nil, fmt.Errorf("invalid startTime format: %w", err)
+		}
+	}
+	if params.EndTime != "" {
+		endTime, err = time.Parse(time.RFC3339, params.EndTime)
+		if err != nil {
+			return nil, fmt.Errorf("invalid endTime format: %w", err)
+		}
+	}
+
+	filter := SessionLogsFilter(s.GetProject(), s.GetLocation(), params.SessionID, startTime, endTime)
+	filterParts = append(filterParts, filter)
+
+	if params.Filter != "" {
+		filterParts = append(filterParts, params.Filter)
+	}
+
+	combinedFilter := strings.Join(filterParts, "\n")
+
+	opts := []logadmin.EntriesOption{
+		logadmin.Filter(combinedFilter),
+	}
+	if params.NewestFirst {
+		opts = append(opts, logadmin.NewestFirst())
+	}
+
+	it := s.LogAdminClient.Entries(ctx, opts...)
+	var results []map[string]any
+	for len(results) < params.Limit {
+		entry, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to iterate log entries: %w", err)
+		}
+
+		result := map[string]any{
+			"logName":   entry.LogName,
+			"timestamp": entry.Timestamp.Format(time.RFC3339),
+			"severity":  entry.Severity.String(),
+			"resource": map[string]any{
+				"type":   entry.Resource.Type,
+				"labels": entry.Resource.Labels,
+			},
+		}
+		if entry.Payload != nil {
+			result["payload"] = entry.Payload
+		}
+
+		if params.Verbose {
+			result["insertId"] = entry.InsertID
+
+			if len(entry.Labels) > 0 {
+				result["labels"] = entry.Labels
+			}
+
+			if entry.HTTPRequest != nil {
+				httpRequestMap := map[string]any{
+					"status":   entry.HTTPRequest.Status,
+					"latency":  entry.HTTPRequest.Latency.String(),
+					"remoteIp": entry.HTTPRequest.RemoteIP,
+				}
+				if req := entry.HTTPRequest.Request; req != nil {
+					httpRequestMap["requestMethod"] = req.Method
+					httpRequestMap["requestUrl"] = req.URL.String()
+					httpRequestMap["userAgent"] = req.UserAgent()
+				}
+				result["httpRequest"] = httpRequestMap
+			}
+
+			if entry.Trace != "" {
+				result["trace"] = entry.Trace
+			}
+
+			if entry.SpanID != "" {
+				result["spanId"] = entry.SpanID
+			}
+
+			if entry.Operation != nil {
+				result["operation"] = map[string]any{
+					"id":       entry.Operation.Id,
+					"producer": entry.Operation.Producer,
+					"first":    entry.Operation.First,
+					"last":     entry.Operation.Last,
+				}
+			}
+
+			if entry.SourceLocation != nil {
+				result["sourceLocation"] = map[string]any{
+					"file":     entry.SourceLocation.File,
+					"line":     entry.SourceLocation.Line,
+					"function": entry.SourceLocation.Function,
+				}
+			}
+		}
+
+		results = append(results, result)
+	}
+	return results, nil
 }

@@ -639,6 +639,7 @@ See [Usage Examples](../reference/cli.md#examples).
         view serverless batches.
     *   **Dataproc Serverless Editor** (`roles/dataproc.serverlessEditor`) to
         view serverless batches.
+    *   **Logs Viewer** (`roles/logging.viewer`) to view logs.
 *   **Tools:**
     *   `list_batches`: Lists Spark batches.
     *   `get_batch`: Gets a Spark batch.
@@ -647,6 +648,8 @@ See [Usage Examples](../reference/cli.md#examples).
     *   `create_spark_batch`: Creates a Spark (Java/Scala) batch.
     *   `list_sessions`: Lists Spark sessions.
     *   `get_session`: Gets a Spark session.
+    *   `get_batch_logs`: Gets Cloud Logging logs for a Spark batch.
+    *   `get_session_logs`: Gets Cloud Logging logs for a Spark session.
 
 ## Spanner (GoogleSQL dialect)
 

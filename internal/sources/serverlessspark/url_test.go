@@ -174,6 +174,42 @@ func TestSessionLogsURL(t *testing.T) {
 	}
 }
 
+func TestSessionLogsFilter(t *testing.T) {
+	startTime := time.Date(2025, 10, 1, 5, 0, 0, 0, time.UTC)
+	endTime := time.Date(2025, 10, 1, 6, 0, 0, 0, time.UTC)
+	got := serverlessspark.SessionLogsFilter("my-project", "us-central1", "my-session", startTime, endTime)
+	want := `resource.type="cloud_dataproc_session"
+resource.labels.session_id="my-session"
+resource.labels.project_id="my-project"
+resource.labels.location="us-central1"
+timestamp>="2025-10-01T04:59:00Z"
+timestamp<="2025-10-01T06:10:00Z"`
+
+	if got != want {
+		t.Errorf("SessionLogsFilter() = \n%v\nwant \n%v", got, want)
+	}
+}
+
+func TestSessionLogsFilter_Escaping(t *testing.T) {
+	startTime := time.Date(2025, 10, 1, 5, 0, 0, 0, time.UTC)
+	endTime := time.Date(2025, 10, 1, 6, 0, 0, 0, time.UTC)
+
+	// Input contains a double quote which should be escaped.
+	sessionID := `my-session" OR root`
+	got := serverlessspark.SessionLogsFilter("my-project", "us-central1", sessionID, startTime, endTime)
+
+	want := `resource.type="cloud_dataproc_session"
+resource.labels.session_id="my-session\" OR root"
+resource.labels.project_id="my-project"
+resource.labels.location="us-central1"
+timestamp>="2025-10-01T04:59:00Z"
+timestamp<="2025-10-01T06:10:00Z"`
+
+	if got != want {
+		t.Errorf("SessionLogsFilter_Escaping() = \n%v\nwant \n%v", got, want)
+	}
+}
+
 func TestSessionConsoleURLFromProto(t *testing.T) {
 	sessionPb := &dataprocpb.Session{
 		Name: "projects/my-project/locations/us-central1/sessions/my-session",
@@ -210,28 +246,5 @@ func TestSessionLogsURLFromProto(t *testing.T) {
 		"&project=my-project"
 	if got != want {
 		t.Errorf("SessionLogsURLFromProto() = \n%v\nwant \n%v", got, want)
-	}
-}
-
-func TestSessionLogsURL_Escaping(t *testing.T) {
-	startTime := time.Date(2025, 10, 1, 5, 0, 0, 0, time.UTC)
-	endTime := time.Date(2025, 10, 1, 6, 0, 0, 0, time.UTC)
-
-	// Input contains a double quote which should be escaped.
-	sessionID := `my-session" OR root`
-	got := serverlessspark.SessionLogsURL("my-project", "us-central1", sessionID, startTime, endTime)
-
-	want := "https://console.cloud.google.com/logs/viewer?advancedFilter=" +
-		"resource.type%3D%22cloud_dataproc_session%22" +
-		// "my-session\" OR root" encoded
-		"%0Aresource.labels.session_id%3D%22my-session%5C%22+OR+root%22" +
-		"%0Aresource.labels.project_id%3D%22my-project%22" +
-		"%0Aresource.labels.location%3D%22us-central1%22" +
-		"%0Atimestamp%3E%3D%222025-10-01T04%3A59%3A00Z%22" +
-		"%0Atimestamp%3C%3D%222025-10-01T06%3A10%3A00Z%22" +
-		"&project=my-project"
-
-	if got != want {
-		t.Errorf("SessionLogsURL_Escaping() = \n%v\nwant \n%v", got, want)
 	}
 }
