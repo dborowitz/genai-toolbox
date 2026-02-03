@@ -40,6 +40,9 @@ tools:
   get_session:
     kind: serverless-spark-get-session
     source: serverless-spark-source
+  get_session_logs:
+    kind: serverless-spark-get-session-logs
+    source: serverless-spark-source
 
 toolsets:
   serverless_spark_tools:
@@ -50,3 +53,5 @@ toolsets:
     - create_spark_batch
     - list_sessions
     - get_session
+    - get_session_logs
+

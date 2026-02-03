@@ -106,8 +106,8 @@ func SessionConsoleURL(projectID, location, sessionID string) string {
 	return fmt.Sprintf("https://console.cloud.google.com/dataproc/interactive/%s/%s/details?project=%s", location, sessionID, projectID)
 }
 
-// SessionLogsURL builds a URL to the Google Cloud Console showing Cloud Logging for the given session and time range.
-func SessionLogsURL(projectID, location, sessionID string, startTime, endTime time.Time) string {
+// SessionLogsFilter generates the LQL filter for the given session and time range.
+func SessionLogsFilter(projectID, location, sessionID string, startTime, endTime time.Time) string {
 	advancedFilterTemplate := `resource.type="cloud_dataproc_session"
 resource.labels.session_id=%q
 resource.labels.project_id=%q
@@ -123,6 +123,12 @@ resource.labels.location=%q`
 		actualEnd := endTime.Add(logTimeBufferAfter)
 		advancedFilter += fmt.Sprintf("\ntimestamp<=\"%s\"", actualEnd.Format(time.RFC3339Nano))
 	}
+	return advancedFilter
+}
+
+// SessionLogsURL builds a URL to the Google Cloud Console showing Cloud Logging for the given session and time range.
+func SessionLogsURL(projectID, location, sessionID string, startTime, endTime time.Time) string {
+	advancedFilter := SessionLogsFilter(projectID, location, sessionID, startTime, endTime)
 
 	v := url.Values{}
 	v.Add("advancedFilter", advancedFilter)
