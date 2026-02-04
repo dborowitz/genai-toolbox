@@ -44,10 +44,8 @@ func BatchConsoleURL(projectID, location, batchID string) string {
 	return fmt.Sprintf("https://console.cloud.google.com/dataproc/batches/%s/%s/summary?project=%s", location, batchID, projectID)
 }
 
-// BatchLogsURL builds a URL to the Google Cloud Console showing Cloud Logging for the given batch and time range.
-//
-// The implementation adds some buffer before and after the provided times.
-func BatchLogsURL(projectID, location, batchID string, startTime, endTime time.Time) string {
+// BatchLogsFilter generates the LQL filter for the given batch and time range.
+func BatchLogsFilter(projectID, location, batchID string, startTime, endTime time.Time) string {
 	advancedFilterTemplate := `resource.type="cloud_dataproc_batch"
 resource.labels.project_id="%s"
 resource.labels.location="%s"
@@ -61,6 +59,14 @@ resource.labels.batch_id="%s"`
 		actualEnd := endTime.Add(logTimeBufferAfter)
 		advancedFilter += fmt.Sprintf("\ntimestamp<=\"%s\"", actualEnd.Format(time.RFC3339Nano))
 	}
+	return advancedFilter
+}
+
+// BatchLogsURL builds a URL to the Google Cloud Console showing Cloud Logging for the given batch and time range.
+//
+// The implementation adds some buffer before and after the provided times.
+func BatchLogsURL(projectID, location, batchID string, startTime, endTime time.Time) string {
+	advancedFilter := BatchLogsFilter(projectID, location, batchID, startTime, endTime)
 
 	v := url.Values{}
 	v.Add("resource", "cloud_dataproc_batch/batch_id/"+batchID)

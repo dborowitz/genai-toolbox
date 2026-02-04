@@ -30,6 +30,7 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/googleapis/genai-toolbox/internal/sources"
 	"github.com/googleapis/genai-toolbox/internal/util"
+	"github.com/googleapis/genai-toolbox/internal/util/parameters"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
@@ -422,9 +423,8 @@ func ToSessions(sessionPbs []*dataprocpb.Session) ([]Session, error) {
 	return sessions, nil
 }
 
-// QueryLogsParams contains the parameters for querying logs
+// QueryLogsParams contains the parameters for querying logs.
 type QueryLogsParams struct {
-	SessionID   string
 	Filter      string
 	NewestFirst bool
 	StartTime   string
@@ -433,27 +433,105 @@ type QueryLogsParams struct {
 	Limit       int
 }
 
-func (s *Source) GetSessionLogs(ctx context.Context, params QueryLogsParams) ([]map[string]any, error) {
-	var filterParts []string
+// QueryLogsParameters is a list of common parameters for querying logs.
+var QueryLogsParameters = parameters.Parameters{
+	parameters.NewStringParameterWithRequired(
+		"filter",
+		"Cloud Logging filter query to append to the resource-specific filter.",
+		false,
+	),
+	parameters.NewBooleanParameterWithRequired("newestFirst", "Set to true for newest logs first. Defaults to oldest first.", false),
+	parameters.NewStringParameterWithRequired("startTime", "Start time in RFC3339 format (e.g., 2025-12-09T00:00:00Z). Defaults to the resource creation time.", false),
+	parameters.NewStringParameterWithRequired("endTime", "End time in RFC3339 format (e.g., 2025-12-09T23:59:59Z). Defaults to now (or resource end time if terminal).", false),
+	parameters.NewBooleanParameterWithRequired("verbose", "Include additional fields (insertId, trace, spanId, httpRequest, labels, operation, sourceLocation). Defaults to false.", false),
+	parameters.NewIntParameterWithDefault("limit", 20, "Maximum number of log entries to return. Default: 20."),
+}
 
-	// Session-specific filter
+// ParseQueryLogsParams parses the parameters into a QueryLogsParams struct.
+func ParseQueryLogsParams(paramValues parameters.ParamValues) (QueryLogsParams, error) {
+	paramMap := paramValues.AsMap()
+	limit := 20
+	if val, ok := paramMap["limit"].(int); ok && val > 0 {
+		limit = val
+	}
+
+	newestFirst, _ := paramMap["newestFirst"].(bool)
+	verbose, _ := paramMap["verbose"].(bool)
+	filter, _ := paramMap["filter"].(string)
+
+	startTimeStr, _ := paramMap["startTime"].(string)
+	endTimeStr, _ := paramMap["endTime"].(string)
+
+	if startTimeStr != "" {
+		if _, err := time.Parse(time.RFC3339, startTimeStr); err != nil {
+			return QueryLogsParams{}, fmt.Errorf("startTime must be in RFC3339 format: %w", err)
+		}
+	}
+	if endTimeStr != "" {
+		if _, err := time.Parse(time.RFC3339, endTimeStr); err != nil {
+			return QueryLogsParams{}, fmt.Errorf("endTime must be in RFC3339 format: %w", err)
+		}
+	}
+
+	return QueryLogsParams{
+		Filter:      filter,
+		NewestFirst: newestFirst,
+		StartTime:   startTimeStr,
+		EndTime:     endTimeStr,
+		Verbose:     verbose,
+		Limit:       limit,
+	}, nil
+}
+
+func (s *Source) GetSessionLogs(ctx context.Context, sessionID string, params QueryLogsParams) ([]map[string]any, error) {
+	if sessionID == "" {
+		return nil, fmt.Errorf("sessionID is required")
+	}
+
+	startTime, endTime, err := parseTimeRange(params.StartTime, params.EndTime)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := SessionLogsFilter(s.GetProject(), s.GetLocation(), sessionID, startTime, endTime)
+	return s.queryCloudLogging(ctx, filter, params)
+}
+
+func (s *Source) GetBatchLogs(ctx context.Context, batchID string, params QueryLogsParams) ([]map[string]any, error) {
+	if batchID == "" {
+		return nil, fmt.Errorf("batchID is required")
+	}
+
+	startTime, endTime, err := parseTimeRange(params.StartTime, params.EndTime)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := BatchLogsFilter(s.GetProject(), s.GetLocation(), batchID, startTime, endTime)
+	return s.queryCloudLogging(ctx, filter, params)
+}
+
+func parseTimeRange(startStr, endStr string) (time.Time, time.Time, error) {
 	var startTime, endTime time.Time
 	var err error
-	if params.StartTime != "" {
-		startTime, err = time.Parse(time.RFC3339, params.StartTime)
+	if startStr != "" {
+		startTime, err = time.Parse(time.RFC3339, startStr)
 		if err != nil {
-			return nil, fmt.Errorf("invalid startTime format: %w", err)
+			return time.Time{}, time.Time{}, fmt.Errorf("invalid startTime format: %w", err)
 		}
 	}
-	if params.EndTime != "" {
-		endTime, err = time.Parse(time.RFC3339, params.EndTime)
+	if endStr != "" {
+		endTime, err = time.Parse(time.RFC3339, endStr)
 		if err != nil {
-			return nil, fmt.Errorf("invalid endTime format: %w", err)
+			return time.Time{}, time.Time{}, fmt.Errorf("invalid endTime format: %w", err)
 		}
 	}
+	return startTime, endTime, nil
+}
 
-	filter := SessionLogsFilter(s.GetProject(), s.GetLocation(), params.SessionID, startTime, endTime)
-	filterParts = append(filterParts, filter)
+func (s *Source) queryCloudLogging(ctx context.Context, baseFilter string, params QueryLogsParams) ([]map[string]any, error) {
+	var filterParts []string
+	filterParts = append(filterParts, baseFilter)
 
 	if params.Filter != "" {
 		filterParts = append(filterParts, params.Filter)

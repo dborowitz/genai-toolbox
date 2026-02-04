@@ -25,6 +25,9 @@ tools:
   get_batch:
     kind: serverless-spark-get-batch
     source: serverless-spark-source
+  get_batch_logs:
+    kind: serverless-spark-get-batch-logs
+    source: serverless-spark-source
   cancel_batch:
     kind: serverless-spark-cancel-batch
     source: serverless-spark-source
@@ -48,6 +51,7 @@ toolsets:
   serverless_spark_tools:
     - list_batches
     - get_batch
+    - get_batch_logs
     - cancel_batch
     - create_pyspark_batch
     - create_spark_batch

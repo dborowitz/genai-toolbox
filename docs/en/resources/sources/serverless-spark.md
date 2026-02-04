@@ -25,6 +25,8 @@ Apache Spark.
   Create a Serverless Spark PySpark batch operation.
 - [`serverless-spark-create-spark-batch`](../tools/serverless-spark/serverless-spark-create-spark-batch.md)
   Create a Serverless Spark Java batch operation.
+- [`serverless-spark-get-batch-logs`](../tools/serverless-spark/serverless-spark-get-batch-logs.md)
+  Get Cloud Logging logs for a Serverless Spark batch.
 - [`serverless-spark-list-sessions`](../tools/serverless-spark/serverless-spark-list-sessions.md)
   List and filter Serverless Spark sessions.
 - [`serverless-spark-get-session`](../tools/serverless-spark/serverless-spark-get-session.md)
