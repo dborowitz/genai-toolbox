@@ -140,6 +140,15 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 				"source":       "my-spark",
 				"authRequired": []string{"my-google-auth"},
 			},
+			"get-batch-logs": map[string]any{
+				"type":   "serverless-spark-get-batch-logs",
+				"source": "my-spark",
+			},
+			"get-batch-logs-with-auth": map[string]any{
+				"type":         "serverless-spark-get-batch-logs",
+				"source":       "my-spark",
+				"authRequired": []string{"my-google-auth"},
+			},
 			"create-pyspark-batch": map[string]any{
 				"type":   "serverless-spark-create-pyspark-batch",
 				"source": "my-spark",
@@ -345,6 +354,51 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 			t.Run("auth", func(t *testing.T) {
 				t.Parallel()
 				runAuthTest(t, "get-batch-with-auth", map[string]any{"name": shortName(fullName)}, http.StatusOK)
+			})
+		})
+
+		t.Run("get-batch-logs", func(t *testing.T) {
+			t.Parallel()
+			fullName := listBatchesRpc(t, client, ctx, "", 1, true)[0].Name
+			t.Run("success", func(t *testing.T) {
+				t.Parallel()
+				runGetBatchLogsTest(t, ctx, fullName)
+			})
+			t.Run("auth", func(t *testing.T) {
+				t.Parallel()
+				runAuthTest(t, "get-batch-logs-with-auth", map[string]any{"batch_id": shortName(fullName)}, http.StatusOK)
+			})
+			t.Run("errors", func(t *testing.T) {
+				t.Parallel()
+				missingBatchFullName := fmt.Sprintf("projects/%s/locations/%s/batches/INVALID_BATCH", serverlessSparkProject, serverlessSparkLocation)
+				tcs := []struct {
+					name     string
+					toolName string
+					request  map[string]any
+					wantCode int
+					wantMsg  string
+				}{
+					{
+						name:     "missing batch_id",
+						toolName: "get-batch-logs",
+						request:  map[string]any{},
+						wantCode: http.StatusBadRequest,
+						wantMsg:  "batch_id\\\" is required",
+					},
+					{
+						name:     "full batch name",
+						toolName: "get-batch-logs",
+						request:  map[string]any{"batch_id": missingBatchFullName},
+						wantCode: http.StatusBadRequest,
+						wantMsg:  fmt.Sprintf("batch_id must be a short name without '/': %s", missingBatchFullName),
+					},
+				}
+				for _, tc := range tcs {
+					t.Run(tc.name, func(t *testing.T) {
+						t.Parallel()
+						testError(t, tc.toolName, tc.request, tc.wantCode, tc.wantMsg)
+					})
+				}
 			})
 		})
 
@@ -1365,6 +1419,51 @@ func runGetSessionLogsTest(t *testing.T, ctx context.Context, fullName string) {
 		"limit":      5,
 	}
 	resp, err := invokeTool("get-session-logs", request, nil)
+	if err != nil {
+		t.Fatalf("invokeTool failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("response status code is not 200, got %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var body map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("error parsing response body: %v", err)
+	}
+	result, ok := body["result"].(string)
+	if !ok {
+		t.Fatalf("unable to find result in response body")
+	}
+
+	var logs []map[string]any
+	// Should be unmarshalable to a list of maps
+	if err := json.Unmarshal([]byte(result), &logs); err != nil {
+		t.Fatalf("error unmarshalling result to logs list: %s. Result: %s", err, result)
+	}
+
+	// Just verify structure of one log if present
+	if len(logs) > 0 {
+		logEntry := logs[0]
+		if _, ok := logEntry["logName"]; !ok {
+			t.Errorf("log entry missing logName: %+v", logEntry)
+		}
+		if _, ok := logEntry["timestamp"]; !ok {
+			t.Errorf("log entry missing timestamp: %+v", logEntry)
+		}
+	}
+}
+
+func runGetBatchLogsTest(t *testing.T, ctx context.Context, fullName string) {
+	// Request logs for the batch. We don't check the exact content as it's variable,
+	// but we expect the call to succeed and return a list (possibly empty).
+	request := map[string]any{
+		"batch_id": shortName(fullName),
+		"limit":    5,
+	}
+	resp, err := invokeTool("get-batch-logs", request, nil)
 	if err != nil {
 		t.Fatalf("invokeTool failed: %v", err)
 	}

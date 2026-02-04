@@ -75,7 +75,23 @@ func TestBatchLogsURL(t *testing.T) {
 		"&project=my-project" +
 		"&resource=cloud_dataproc_batch%2Fbatch_id%2Fmy-batch"
 	if got != want {
-		t.Errorf("BatchLogsURL() = %v, want %v", got, want)
+		t.Errorf("BatchLogsURL() = \n%v\nwant \n%v", got, want)
+	}
+}
+
+func TestBatchLogsFilter(t *testing.T) {
+	startTime := time.Date(2025, 10, 1, 5, 0, 0, 0, time.UTC)
+	endTime := time.Date(2025, 10, 1, 6, 0, 0, 0, time.UTC)
+	got := serverlessspark.BatchLogsFilter("my-project", "us-central1", "my-batch", startTime, endTime)
+	want := `resource.type="cloud_dataproc_batch"
+resource.labels.project_id="my-project"
+resource.labels.location="us-central1"
+resource.labels.batch_id="my-batch"
+timestamp>="2025-10-01T04:59:00Z"
+timestamp<="2025-10-01T06:10:00Z"`
+
+	if got != want {
+		t.Errorf("BatchLogsFilter() = \n%v\nwant \n%v", got, want)
 	}
 }
 

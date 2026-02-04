@@ -223,6 +223,7 @@ import (
 	_ "github.com/googleapis/genai-toolbox/internal/tools/serverlessspark/serverlesssparkcreatepysparkbatch"
 	_ "github.com/googleapis/genai-toolbox/internal/tools/serverlessspark/serverlesssparkcreatesparkbatch"
 	_ "github.com/googleapis/genai-toolbox/internal/tools/serverlessspark/serverlesssparkgetbatch"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/serverlessspark/serverlesssparkgetbatchlogs"
 	_ "github.com/googleapis/genai-toolbox/internal/tools/serverlessspark/serverlesssparkgetsession"
 	_ "github.com/googleapis/genai-toolbox/internal/tools/serverlessspark/serverlesssparkgetsessionlogs"
 	_ "github.com/googleapis/genai-toolbox/internal/tools/serverlessspark/serverlesssparklistbatches"

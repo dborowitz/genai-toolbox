@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package serverlesssparkgetsessionlogs
+package serverlesssparkgetbatchlogs
 
 import (
 	"context"
@@ -29,7 +29,7 @@ import (
 	"github.com/googleapis/genai-toolbox/internal/util/parameters"
 )
 
-const resourceType = "serverless-spark-get-session-logs"
+const resourceType = "serverless-spark-get-batch-logs"
 
 func init() {
 	if !tools.Register(resourceType, newConfig) {
@@ -46,9 +46,9 @@ func newConfig(ctx context.Context, name string, decoder *yaml.Decoder) (tools.T
 }
 
 type compatibleSource interface {
-	GetSessionControllerClient() *dataproc.SessionControllerClient
-	GetSession(context.Context, string) (map[string]any, error)
-	GetSessionLogs(ctx context.Context, sessionID string, params ss.QueryLogsParams) ([]map[string]any, error)
+	GetBatchControllerClient() *dataproc.BatchControllerClient
+	GetBatch(context.Context, string) (map[string]any, error)
+	GetBatchLogs(ctx context.Context, batchID string, params ss.QueryLogsParams) ([]map[string]any, error)
 }
 
 type Config struct {
@@ -71,11 +71,11 @@ func (cfg Config) ToolConfigType() string {
 func (cfg Config) Initialize(srcs map[string]sources.Source) (tools.Tool, error) {
 	desc := cfg.Description
 	if desc == "" {
-		desc = "Gets Cloud Logging logs for a Serverless Spark (aka Dataproc Serverless) session."
+		desc = "Gets Cloud Logging logs for a Serverless Spark (aka Dataproc Serverless) batch."
 	}
 
 	params := parameters.Parameters{
-		parameters.NewStringParameter("session_id", "The short session ID (e.g. 'my-session')."),
+		parameters.NewStringParameter("batch_id", "The short batch ID (e.g. 'my-batch')."),
 	}
 	params = append(params, ss.QueryLogsParameters...)
 	inputSchema, _ := params.McpManifest()
@@ -109,12 +109,12 @@ func (t Tool) Invoke(ctx context.Context, resourceMgr tools.SourceProvider, para
 		return nil, err
 	}
 	paramMap := params.AsMap()
-	sessionID, ok := paramMap["session_id"].(string)
+	batchID, ok := paramMap["batch_id"].(string)
 	if !ok {
-		return nil, fmt.Errorf("missing required parameter: session_id")
+		return nil, fmt.Errorf("missing required parameter: batch_id")
 	}
-	if strings.Contains(sessionID, "/") {
-		return nil, fmt.Errorf("session_id must be a short name without '/': %s", sessionID)
+	if strings.Contains(batchID, "/") {
+		return nil, fmt.Errorf("batch_id must be a short name without '/': %s", batchID)
 	}
 
 	queryParams, err := ss.ParseQueryLogsParams(params)
@@ -122,35 +122,34 @@ func (t Tool) Invoke(ctx context.Context, resourceMgr tools.SourceProvider, para
 		return nil, err
 	}
 
-	// If times are missing, fetch session details to fill them in
+	// If times are missing, fetch batch details to fill them in
 	if queryParams.StartTime == "" || queryParams.EndTime == "" {
-		session, err := source.GetSession(ctx, sessionID)
+		batch, err := source.GetBatch(ctx, batchID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get session details to determine time range: %w", err)
+			return nil, fmt.Errorf("failed to get batch details to determine time range: %w", err)
 		}
 
-		sessionData, ok := session["session"].(map[string]any)
+		batchData, ok := batch["batch"].(map[string]any)
 		if !ok {
-			return nil, fmt.Errorf("unexpected session response format")
+			return nil, fmt.Errorf("unexpected batch response format")
 		}
 
 		if queryParams.StartTime == "" {
-			if ct, ok := sessionData["createTime"].(string); ok {
+			if ct, ok := batchData["createTime"].(string); ok {
 				queryParams.StartTime = ct
 			}
 		}
 
 		if queryParams.EndTime == "" {
-			state, _ := sessionData["state"].(string)
+			state, _ := batchData["state"].(string)
 			// Check if terminal state
 			terminalStates := map[string]bool{
-				"SUCCEEDED":  true,
-				"FAILED":     true,
-				"CANCELLED":  true,
-				"TERMINATED": true,
+				"SUCCEEDED": true,
+				"FAILED":    true,
+				"CANCELLED": true,
 			}
 			if terminalStates[state] {
-				if st, ok := sessionData["stateTime"].(string); ok {
+				if st, ok := batchData["stateTime"].(string); ok {
 					queryParams.EndTime = st
 				}
 			}
@@ -161,7 +160,15 @@ func (t Tool) Invoke(ctx context.Context, resourceMgr tools.SourceProvider, para
 		}
 	}
 
-	return source.GetSessionLogs(ctx, sessionID, queryParams)
+	// Validate time formats if provided (already handled by RFC3339 string assignment if retrieved from batch)
+	// ParseQueryLogsParams already validates user input, but we might have updated them from batch details.
+	// However, batch details from API should be valid. We only need to check if we modified them or if they came from user and ParseQueryLogsParams already passed.
+	// Actually ParseQueryLogsParams checks user input. If we populate from API it should be fine.
+	// But let's re-validate to be safe if we want, or trust ParseQueryLogsParams + API.
+	// The original code re-parsed user input dates. ParseQueryLogsParams does that.
+	// So we only need to worry if we *set* them here.
+
+	return source.GetBatchLogs(ctx, batchID, queryParams)
 }
 
 func (t Tool) EmbedParams(ctx context.Context, paramValues parameters.ParamValues, embeddingModelsMap map[string]embeddingmodels.EmbeddingModel) (parameters.ParamValues, error) {
