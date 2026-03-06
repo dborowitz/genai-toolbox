@@ -265,25 +265,3 @@ func TestExtractSessionTemplateDetails_Failure(t *testing.T) {
 		t.Errorf("ExtractSessionTemplateDetails() error = %v, want %v", err, wantErr)
 	}
 }
-
-func TestSessionTemplateConsoleURL(t *testing.T) {
-	got := serverlessspark.SessionTemplateConsoleURL("my-project", "us-central1", "my-session-template")
-	want := "https://console.cloud.google.com/dataproc/sessionTemplates/us-central1/my-session-template/summary?project=my-project"
-	if got != want {
-		t.Errorf("SessionTemplateConsoleURL() = %v, want %v", got, want)
-	}
-}
-
-func TestSessionTemplateConsoleURLFromProto(t *testing.T) {
-	sessionTemplatePb := &dataprocpb.SessionTemplate{
-		Name: "projects/my-project/locations/us-central1/sessionTemplates/my-session-template",
-	}
-	got, err := serverlessspark.SessionTemplateConsoleURLFromProto(sessionTemplatePb)
-	if err != nil {
-		t.Fatalf("SessionTemplateConsoleURLFromProto() error = %v", err)
-	}
-	want := "https://console.cloud.google.com/dataproc/sessionTemplates/us-central1/my-session-template/summary?project=my-project"
-	if got != want {
-		t.Errorf("SessionTemplateConsoleURLFromProto() = %v, want %v", got, want)
-	}
-}

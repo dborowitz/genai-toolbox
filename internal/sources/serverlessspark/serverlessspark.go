@@ -88,11 +88,11 @@ func (r Config) Initialize(ctx context.Context, tracer trace.Tracer) (sources.So
 	}
 
 	s := &Source{
-		Config:    r,
-		BatchClient:    batchClient,
+		Config:                r,
+		BatchClient:           batchClient,
 		SessionTemplateClient: sessionTemplateClient,
-		OpsClient: opsClient,
-		SessionClient: sessionClient,
+		OpsClient:             opsClient,
+		SessionClient:         sessionClient,
 	}
 	return s, nil
 }
@@ -101,10 +101,10 @@ var _ sources.Source = &Source{}
 
 type Source struct {
 	Config
-	BatchClient    *dataproc.BatchControllerClient
+	BatchClient           *dataproc.BatchControllerClient
 	SessionTemplateClient *dataproc.SessionTemplateControllerClient
-	OpsClient *longrunning.OperationsClient
-	SessionClient *dataproc.SessionControllerClient
+	OpsClient             *longrunning.OperationsClient
+	SessionClient         *dataproc.SessionControllerClient
 }
 
 func (s *Source) SourceType() string {
@@ -313,7 +313,7 @@ func (s *Source) GetSessionTemplate(ctx context.Context, name string) (map[strin
 	req := &dataprocpb.GetSessionTemplateRequest{
 		Name: fmt.Sprintf("projects/%s/locations/%s/sessionTemplates/%s", s.GetProject(), s.GetLocation(), name),
 	}
-	
+
 	sessionTemplatePb, err := client.GetSessionTemplate(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session template: %w", err)
@@ -329,14 +329,8 @@ func (s *Source) GetSessionTemplate(ctx context.Context, name string) (map[strin
 		return nil, fmt.Errorf("failed to unmarshal session template JSON: %w", err)
 	}
 
-	consoleUrl, err := SessionTemplateConsoleURLFromProto(sessionTemplatePb)
-	if err != nil {
-		return nil, fmt.Errorf("error generating console url: %v", err)
-	}
-
 	wrappedResult := map[string]any{
-		"consoleUrl":		consoleUrl,
-		"sessionTemplate":	result,
+		"sessionTemplate": result,
 	}
 
 	return wrappedResult, nil
