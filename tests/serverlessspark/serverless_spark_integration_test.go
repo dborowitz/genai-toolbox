@@ -64,7 +64,7 @@ func getServerlessSparkVars(t *testing.T) map[string]any {
 	}
 
 	return map[string]any{
-		"kind":     "serverless-spark",
+		"type":     "serverless-spark",
 		"project":  serverlessSparkProject,
 		"location": serverlessSparkLocation,
 	}
@@ -81,40 +81,58 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 		},
 		"authServices": map[string]any{
 			"my-google-auth": map[string]any{
-				"kind":     "google",
+				"type":     "google",
 				"clientId": tests.ClientId,
 			},
 		},
 		"tools": map[string]any{
 			"list-batches": map[string]any{
-				"kind":   "serverless-spark-list-batches",
+				"type":   "serverless-spark-list-batches",
 				"source": "my-spark",
 			},
 			"list-batches-with-auth": map[string]any{
-				"kind":         "serverless-spark-list-batches",
+				"type":         "serverless-spark-list-batches",
+				"source":       "my-spark",
+				"authRequired": []string{"my-google-auth"},
+			},
+			"list-sessions": map[string]any{
+				"type":   "serverless-spark-list-sessions",
+				"source": "my-spark",
+			},
+			"list-sessions-with-auth": map[string]any{
+				"type":         "serverless-spark-list-sessions",
 				"source":       "my-spark",
 				"authRequired": []string{"my-google-auth"},
 			},
 			"get-batch": map[string]any{
-				"kind":   "serverless-spark-get-batch",
+				"type":   "serverless-spark-get-batch",
 				"source": "my-spark",
 			},
 			"get-batch-with-auth": map[string]any{
-				"kind":         "serverless-spark-get-batch",
+				"type":         "serverless-spark-get-batch",
+				"source":       "my-spark",
+				"authRequired": []string{"my-google-auth"},
+			},
+			"get-session": map[string]any{
+				"type":   "serverless-spark-get-session",
+				"source": "my-spark",
+			},
+			"get-session-with-auth": map[string]any{
+				"type":         "serverless-spark-get-session",
 				"source":       "my-spark",
 				"authRequired": []string{"my-google-auth"},
 			},
 			"cancel-batch": map[string]any{
-				"kind":   "serverless-spark-cancel-batch",
+				"type":   "serverless-spark-cancel-batch",
 				"source": "my-spark",
 			},
 			"cancel-batch-with-auth": map[string]any{
-				"kind":         "serverless-spark-cancel-batch",
+				"type":         "serverless-spark-cancel-batch",
 				"source":       "my-spark",
 				"authRequired": []string{"my-google-auth"},
 			},
 			"create-pyspark-batch": map[string]any{
-				"kind":   "serverless-spark-create-pyspark-batch",
+				"type":   "serverless-spark-create-pyspark-batch",
 				"source": "my-spark",
 				"environmentConfig": map[string]any{
 					"executionConfig": map[string]any{
@@ -123,7 +141,7 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 				},
 			},
 			"create-pyspark-batch-2-3": map[string]any{
-				"kind":          "serverless-spark-create-pyspark-batch",
+				"type":          "serverless-spark-create-pyspark-batch",
 				"source":        "my-spark",
 				"runtimeConfig": map[string]any{"version": "2.3"},
 				"environmentConfig": map[string]any{
@@ -133,12 +151,12 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 				},
 			},
 			"create-pyspark-batch-with-auth": map[string]any{
-				"kind":         "serverless-spark-create-pyspark-batch",
+				"type":         "serverless-spark-create-pyspark-batch",
 				"source":       "my-spark",
 				"authRequired": []string{"my-google-auth"},
 			},
 			"create-spark-batch": map[string]any{
-				"kind":   "serverless-spark-create-spark-batch",
+				"type":   "serverless-spark-create-spark-batch",
 				"source": "my-spark",
 				"environmentConfig": map[string]any{
 					"executionConfig": map[string]any{
@@ -147,7 +165,7 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 				},
 			},
 			"create-spark-batch-2-3": map[string]any{
-				"kind":          "serverless-spark-create-spark-batch",
+				"type":          "serverless-spark-create-spark-batch",
 				"source":        "my-spark",
 				"runtimeConfig": map[string]any{"version": "2.3"},
 				"environmentConfig": map[string]any{
@@ -157,7 +175,7 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 				},
 			},
 			"create-spark-batch-with-auth": map[string]any{
-				"kind":         "serverless-spark-create-spark-batch",
+				"type":         "serverless-spark-create-spark-batch",
 				"source":       "my-spark",
 				"authRequired": []string{"my-google-auth"},
 			},
@@ -200,6 +218,12 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 	}
 	defer sessionTemplateClient.Close()
 
+	sessionClient, err := dataproc.NewSessionControllerClient(ctx, option.WithEndpoint(endpoint))
+	if err != nil {
+		t.Fatalf("failed to create dataproc session client: %v", err)
+	}
+	defer sessionClient.Close()
+
 	t.Run("list-batches", func(t *testing.T) {
 		// list-batches is sensitive to state changes, so this test must run sequentially.
 		t.Run("success", func(t *testing.T) {
@@ -218,14 +242,14 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 					name:     "zero page size",
 					toolName: "list-batches",
 					request:  map[string]any{"pageSize": 0},
-					wantCode: http.StatusBadRequest,
+					wantCode: http.StatusOK,
 					wantMsg:  "pageSize must be positive: 0",
 				},
 				{
 					name:     "negative page size",
 					toolName: "list-batches",
 					request:  map[string]any{"pageSize": -1},
-					wantCode: http.StatusBadRequest,
+					wantCode: http.StatusOK,
 					wantMsg:  "pageSize must be positive: -1",
 				},
 			}
@@ -239,6 +263,48 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 		t.Run("auth", func(t *testing.T) {
 			t.Parallel()
 			runAuthTest(t, "list-batches-with-auth", map[string]any{"pageSize": 1}, http.StatusOK)
+		})
+	})
+
+	t.Run("list-sessions", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			// Just verify it runs without error, as we might not have sessions.
+			runListSessionsTest(t, sessionClient, ctx)
+		})
+		t.Run("errors", func(t *testing.T) {
+			t.Parallel()
+			tcs := []struct {
+				name     string
+				toolName string
+				request  map[string]any
+				wantCode int
+				wantMsg  string
+			}{
+				{
+					name:     "zero page size",
+					toolName: "list-sessions",
+					request:  map[string]any{"pageSize": 0},
+					wantCode: http.StatusOK,
+					wantMsg:  "pageSize must be positive: 0",
+				},
+				{
+					name:     "negative page size",
+					toolName: "list-sessions",
+					request:  map[string]any{"pageSize": -1},
+					wantCode: http.StatusOK,
+					wantMsg:  "pageSize must be positive: -1",
+				},
+			}
+			for _, tc := range tcs {
+				t.Run(tc.name, func(t *testing.T) {
+					t.Parallel()
+					testError(t, tc.toolName, tc.request, tc.wantCode, tc.wantMsg)
+				})
+			}
+		})
+		t.Run("auth", func(t *testing.T) {
+			t.Parallel()
+			runAuthTest(t, "list-sessions-with-auth", map[string]any{"pageSize": 1}, http.StatusOK)
 		})
 	})
 
@@ -265,14 +331,14 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 						name:     "missing batch",
 						toolName: "get-batch",
 						request:  map[string]any{"name": "INVALID_BATCH"},
-						wantCode: http.StatusBadRequest,
-						wantMsg:  fmt.Sprintf("Not found: Batch projects/%s/locations/%s/batches/INVALID_BATCH", serverlessSparkProject, serverlessSparkLocation),
+						wantCode: http.StatusOK,
+						wantMsg:  fmt.Sprintf("error processing GCP request: failed to get batch: rpc error: code = NotFound desc = Not found: Batch projects/%s/locations/%s/batches/INVALID_BATCH", serverlessSparkProject, serverlessSparkLocation),
 					},
 					{
 						name:     "full batch name",
 						toolName: "get-batch",
 						request:  map[string]any{"name": missingBatchFullName},
-						wantCode: http.StatusBadRequest,
+						wantCode: http.StatusOK,
 						wantMsg:  fmt.Sprintf("name must be a short batch name without '/': %s", missingBatchFullName),
 					},
 				}
@@ -286,6 +352,56 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 			t.Run("auth", func(t *testing.T) {
 				t.Parallel()
 				runAuthTest(t, "get-batch-with-auth", map[string]any{"name": shortName(fullName)}, http.StatusOK)
+			})
+		})
+
+		t.Run("get-session", func(t *testing.T) {
+			t.Parallel()
+			// Try to find an existing session to test success case
+			sessions := listSessionsRpc(t, sessionClient, ctx, "", 1, false)
+			if len(sessions) > 0 {
+				fullName := sessions[0].Name
+				t.Run("success", func(t *testing.T) {
+					t.Parallel()
+					runGetSessionTest(t, sessionClient, ctx, fullName)
+				})
+				t.Run("auth", func(t *testing.T) {
+					t.Parallel()
+					runAuthTest(t, "get-session-with-auth", map[string]any{"name": shortName(fullName)}, http.StatusOK)
+				})
+			}
+
+			t.Run("errors", func(t *testing.T) {
+				t.Parallel()
+				missingSessionFullName := fmt.Sprintf("projects/%s/locations/%s/sessions/INVALID_SESSION", serverlessSparkProject, serverlessSparkLocation)
+				tcs := []struct {
+					name     string
+					toolName string
+					request  map[string]any
+					wantCode int
+					wantMsg  string
+				}{
+					{
+						name:     "missing session",
+						toolName: "get-session",
+						request:  map[string]any{"name": "INVALID_SESSION"},
+						wantCode: http.StatusOK,
+						wantMsg:  fmt.Sprintf("Not found: Session projects/%s/locations/%s/sessions/INVALID_SESSION", serverlessSparkProject, serverlessSparkLocation),
+					},
+					{
+						name:     "full session name",
+						toolName: "get-session",
+						request:  map[string]any{"name": missingSessionFullName},
+						wantCode: http.StatusOK,
+						wantMsg:  fmt.Sprintf("name must be a short session name without '/': %s", missingSessionFullName),
+					},
+				}
+				for _, tc := range tcs {
+					t.Run(tc.name, func(t *testing.T) {
+						t.Parallel()
+						testError(t, tc.toolName, tc.request, tc.wantCode, tc.wantMsg)
+					})
+				}
 			})
 		})
 
@@ -367,13 +483,13 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 					{
 						name:    "missing main file",
 						request: map[string]any{},
-						wantMsg: "parameter \\\"mainFile\\\" is required",
+						wantMsg: `{"error":"parameter \"mainFile\" is required"}`,
 					},
 				}
 				for _, tc := range tcs {
 					t.Run(tc.name, func(t *testing.T) {
 						t.Parallel()
-						testError(t, "create-pyspark-batch", tc.request, http.StatusBadRequest, tc.wantMsg)
+						testError(t, "create-pyspark-batch", tc.request, http.StatusOK, tc.wantMsg)
 					})
 				}
 			})
@@ -493,7 +609,7 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 				for _, tc := range tcs {
 					t.Run(tc.name, func(t *testing.T) {
 						t.Parallel()
-						testError(t, "create-spark-batch", tc.request, http.StatusBadRequest, tc.wantMsg)
+						testError(t, "create-spark-batch", tc.request, http.StatusOK, tc.wantMsg)
 					})
 				}
 			})
@@ -544,21 +660,21 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 						name:     "missing op parameter",
 						toolName: "cancel-batch",
 						request:  map[string]any{},
-						wantCode: http.StatusBadRequest,
-						wantMsg:  "parameter \\\"operation\\\" is required",
+						wantCode: http.StatusOK,
+						wantMsg:  `{"error":"parameter \"operation\" is required"}`,
 					},
 					{
 						name:     "nonexistent op",
 						toolName: "cancel-batch",
 						request:  map[string]any{"operation": "INVALID_OPERATION"},
-						wantCode: http.StatusBadRequest,
-						wantMsg:  "Operation not found",
+						wantCode: http.StatusOK,
+						wantMsg:  "error processing GCP request: failed to cancel operation: rpc error: code = NotFound desc = Operation not found",
 					},
 					{
 						name:     "full op name",
 						toolName: "cancel-batch",
 						request:  map[string]any{"operation": fullOpName},
-						wantCode: http.StatusBadRequest,
+						wantCode: http.StatusOK,
 						wantMsg:  fmt.Sprintf("operation must be a short operation name without '/': %s", fullOpName),
 					},
 				}
@@ -571,7 +687,7 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 			})
 			t.Run("auth", func(t *testing.T) {
 				t.Parallel()
-				runAuthTest(t, "cancel-batch-with-auth", map[string]any{"operation": "INVALID_OPERATION"}, http.StatusBadRequest)
+				runAuthTest(t, "cancel-batch-with-auth", map[string]any{"operation": "INVALID_OPERATION"}, http.StatusOK)
 			})
 		})
 	})
@@ -1018,18 +1134,32 @@ func testError(t *testing.T, toolName string, request map[string]any, wantCode i
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != wantCode {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		t.Fatalf("response status code is not %d, got %d: %s", wantCode, resp.StatusCode, string(bodyBytes))
-	}
-
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatalf("failed to read response body: %v", err)
 	}
 
-	if !bytes.Contains(bodyBytes, []byte(wantMsg)) {
-		t.Fatalf("response body does not contain %q: %s", wantMsg, string(bodyBytes))
+	if resp.StatusCode != wantCode {
+		t.Fatalf("response status code is not %d, got %d: %s", wantCode, resp.StatusCode, string(bodyBytes))
+	}
+
+	var body map[string]any
+	if err := json.Unmarshal(bodyBytes, &body); err != nil {
+		t.Fatalf("failed to unmarshal outer response: %v", err)
+	}
+
+	var resultStr string
+	if res, ok := body["result"].(string); ok {
+		resultStr = res
+	} else if errMsg, ok := body["error"].(string); ok {
+		resultStr = errMsg
+	} else {
+		// If neither exists, check the raw bytes as a last resort
+		resultStr = string(bodyBytes)
+	}
+
+	if !strings.Contains(resultStr, wantMsg) {
+		t.Fatalf("result string %q does not contain expected message %q", resultStr, wantMsg)
 	}
 }
 
@@ -1055,4 +1185,145 @@ func invokeTool(toolName string, request map[string]any, headers map[string]stri
 func shortName(fullName string) string {
 	parts := strings.Split(fullName, "/")
 	return parts[len(parts)-1]
+}
+
+func runListSessionsTest(t *testing.T, client *dataproc.SessionControllerClient, ctx context.Context) {
+	expected := listSessionsRpc(t, client, ctx, "", 20, false)
+
+	request := map[string]any{
+		"pageSize": 20,
+	}
+	resp, err := invokeTool("list-sessions", request, nil)
+	if err != nil {
+		t.Fatalf("invokeTool failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("response status code is not 200, got %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var body map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("error parsing response body: %v", err)
+	}
+
+	result, ok := body["result"].(string)
+	if !ok {
+		t.Fatalf("unable to find result in response body")
+	}
+
+	var listResponse serverlessspark.ListSessionsResponse
+	if err := json.Unmarshal([]byte(result), &listResponse); err != nil {
+		t.Fatalf("error unmarshalling result: %s", err)
+	}
+
+	if len(expected) == 0 {
+		if len(listResponse.Sessions) != 0 {
+			t.Errorf("expected 0 sessions, got %d", len(listResponse.Sessions))
+		}
+		return
+	}
+
+	if !reflect.DeepEqual(listResponse.Sessions, expected) {
+		t.Fatalf("unexpected sessions: got %+v, want %+v", listResponse.Sessions, expected)
+	}
+
+	for _, session := range listResponse.Sessions {
+		if !strings.Contains(session.ConsoleURL, "/dataproc/interactive/") {
+			t.Errorf("unexpected consoleUrl in session: %#v", session)
+		}
+		if !strings.HasPrefix(session.LogsURL, logsURLPrefix) {
+			t.Errorf("unexpected logsUrl in session: %#v", session)
+		}
+	}
+}
+
+func listSessionsRpc(t *testing.T, client *dataproc.SessionControllerClient, ctx context.Context, filter string, n int, exact bool) []serverlessspark.Session {
+	parent := fmt.Sprintf("projects/%s/locations/%s", serverlessSparkProject, serverlessSparkLocation)
+	req := &dataprocpb.ListSessionsRequest{
+		Parent:   parent,
+		PageSize: int32(n),
+	}
+	if filter != "" {
+		req.Filter = filter
+	}
+
+	it := client.ListSessions(ctx, req)
+	pager := iterator.NewPager(it, n, "")
+	var sessionPbs []*dataprocpb.Session
+	_, err := pager.NextPage(&sessionPbs)
+	if err != nil {
+		t.Fatalf("failed to list sessions: %s", err)
+	}
+	if exact && len(sessionPbs) != n {
+		t.Fatalf("expected exactly %d sessions, got %d", n, len(sessionPbs))
+	}
+	if !exact && (len(sessionPbs) == 0 || len(sessionPbs) > n) {
+		t.Fatalf("expected between 1 and %d sessions, got %d", n, len(sessionPbs))
+	}
+	sessions, err := serverlessspark.ToSessions(sessionPbs)
+	if err != nil {
+		t.Fatalf("failed to convert sessions to JSON: %v", err)
+	}
+
+	return sessions
+}
+
+func runGetSessionTest(t *testing.T, client *dataproc.SessionControllerClient, ctx context.Context, fullName string) {
+	req := &dataprocpb.GetSessionRequest{
+		Name: fullName,
+	}
+	rawWantSessionPb, err := client.GetSession(ctx, req)
+	if err != nil {
+		t.Fatalf("failed to get session: %s", err)
+	}
+
+	jsonBytes, err := protojson.Marshal(rawWantSessionPb)
+	if err != nil {
+		t.Fatalf("failed to marshal session to JSON: %s", err)
+	}
+	var wantSessionPb dataprocpb.Session
+	if err := protojson.Unmarshal(jsonBytes, &wantSessionPb); err != nil {
+		t.Fatalf("error unmarshalling result: %s", err)
+	}
+
+	request := map[string]any{"name": shortName(fullName)}
+	resp, err := invokeTool("get-session", request, nil)
+	if err != nil {
+		t.Fatalf("invokeTool failed: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("response status code is not 200, got %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+	var body map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("error parsing response body: %v", err)
+	}
+	result, ok := body["result"].(string)
+	if !ok {
+		t.Fatalf("unable to find result in response body")
+	}
+	var wrappedResult map[string]any
+	if err := json.Unmarshal([]byte(result), &wrappedResult); err != nil {
+		t.Fatalf("error unmarshalling result: %s", err)
+	}
+
+	sessionJSON, err := json.Marshal(wrappedResult["session"])
+	if err != nil {
+		t.Fatalf("failed to marshal session: %v", err)
+	}
+
+	var session dataprocpb.Session
+	if err := protojson.Unmarshal(sessionJSON, &session); err != nil {
+		t.Fatalf("error unmarshalling session from wrapped result: %s", err)
+	}
+
+	if !cmp.Equal(&session, &wantSessionPb, protocmp.Transform()) {
+		diff := cmp.Diff(&session, &wantSessionPb, protocmp.Transform())
+		t.Errorf("GetSession() returned diff (-got +want):\n%s", diff)
+	}
 }

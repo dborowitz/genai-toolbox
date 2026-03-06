@@ -20,7 +20,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	yaml "github.com/goccy/go-yaml"
 	"github.com/google/go-cmp/cmp"
 	"github.com/googleapis/genai-toolbox/internal/server"
 	"github.com/googleapis/genai-toolbox/internal/sources"
@@ -39,15 +38,15 @@ func TestParseFromYamlCloudGDA(t *testing.T) {
 		{
 			desc: "basic example",
 			in: `
-		            sources:
-		                my-gda-instance:
-		                    kind: cloud-gemini-data-analytics
-		                    projectId: test-project-id
-		            `,
+			kind: sources
+			name: my-gda-instance
+			type: cloud-gemini-data-analytics
+			projectId: test-project-id
+			`,
 			want: map[string]sources.SourceConfig{
 				"my-gda-instance": cloudgda.Config{
 					Name:           "my-gda-instance",
-					Kind:           cloudgda.SourceKind,
+					Type:           cloudgda.SourceType,
 					ProjectID:      "test-project-id",
 					UseClientOAuth: false,
 				},
@@ -56,16 +55,16 @@ func TestParseFromYamlCloudGDA(t *testing.T) {
 		{
 			desc: "use client auth example",
 			in: `
-			sources:
-				my-gda-instance:
-					kind: cloud-gemini-data-analytics
-					projectId: another-project
-					useClientOAuth: true
+			kind: sources
+			name: my-gda-instance
+			type: cloud-gemini-data-analytics
+			projectId: another-project
+			useClientOAuth: true
 			`,
 			want: map[string]sources.SourceConfig{
 				"my-gda-instance": cloudgda.Config{
 					Name:           "my-gda-instance",
-					Kind:           cloudgda.SourceKind,
+					Type:           cloudgda.SourceType,
 					ProjectID:      "another-project",
 					UseClientOAuth: true,
 				},
@@ -76,16 +75,12 @@ func TestParseFromYamlCloudGDA(t *testing.T) {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
-			got := struct {
-				Sources server.SourceConfigs `yaml:"sources"`
-			}{}
-			// Parse contents
-			err := yaml.Unmarshal(testutils.FormatYaml(tc.in), &got)
+			got, _, _, _, _, _, err := server.UnmarshalResourceConfig(context.Background(), testutils.FormatYaml(tc.in))
 			if err != nil {
 				t.Fatalf("unable to unmarshal: %s", err)
 			}
-			if !cmp.Equal(tc.want, got.Sources) {
-				t.Fatalf("incorrect parse: want %v, got %v", tc.want, got.Sources)
+			if !cmp.Equal(tc.want, got) {
+				t.Fatalf("incorrect parse: want %v, got %v", tc.want, got)
 			}
 		})
 	}
@@ -101,22 +96,18 @@ func TestFailParseFromYaml(t *testing.T) {
 		{
 			desc: "missing projectId",
 			in: `
-			sources:
-				my-gda-instance:
-					kind: cloud-gemini-data-analytics
+			kind: sources
+			name: my-gda-instance
+			type: cloud-gemini-data-analytics
 			`,
-			err: "unable to parse source \"my-gda-instance\" as \"cloud-gemini-data-analytics\": Key: 'Config.ProjectID' Error:Field validation for 'ProjectID' failed on the 'required' tag",
+			err: "error unmarshaling sources: unable to parse source \"my-gda-instance\" as \"cloud-gemini-data-analytics\": Key: 'Config.ProjectID' Error:Field validation for 'ProjectID' failed on the 'required' tag",
 		},
 	}
 	for _, tc := range tcs {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
-			got := struct {
-				Sources server.SourceConfigs `yaml:"sources"`
-			}{}
-			// Parse contents
-			err := yaml.Unmarshal(testutils.FormatYaml(tc.in), &got)
+			_, _, _, _, _, _, err := server.UnmarshalResourceConfig(context.Background(), testutils.FormatYaml(tc.in))
 			if err == nil {
 				t.Fatalf("expect parsing to fail")
 			}
@@ -153,12 +144,12 @@ func TestInitialize(t *testing.T) {
 	}{
 		{
 			desc:            "initialize with ADC",
-			cfg:             cloudgda.Config{Name: "test-gda", Kind: cloudgda.SourceKind, ProjectID: "test-proj"},
+			cfg:             cloudgda.Config{Name: "test-gda", Type: cloudgda.SourceType, ProjectID: "test-proj"},
 			wantClientOAuth: false,
 		},
 		{
 			desc:            "initialize with client OAuth",
-			cfg:             cloudgda.Config{Name: "test-gda-oauth", Kind: cloudgda.SourceKind, ProjectID: "test-proj", UseClientOAuth: true},
+			cfg:             cloudgda.Config{Name: "test-gda-oauth", Type: cloudgda.SourceType, ProjectID: "test-proj", UseClientOAuth: true},
 			wantClientOAuth: true,
 		},
 	}
@@ -181,11 +172,9 @@ func TestInitialize(t *testing.T) {
 			if gdaSrc.Client == nil && !tc.wantClientOAuth {
 				t.Fatal("expected non-nil HTTP client for ADC, got nil")
 			}
-			// When client OAuth is true, the source's client should be initialized with a base HTTP client
-			// that includes the user agent round tripper, but not the OAuth token. The token-aware
-			// client is created by GetClient.
-			if gdaSrc.Client == nil && tc.wantClientOAuth {
-				t.Fatal("expected non-nil HTTP client for client OAuth config, got nil")
+			// When client OAuth is true, the source's client should be nil.
+			if gdaSrc.Client != nil && tc.wantClientOAuth {
+				t.Fatal("expected nil HTTP client for client OAuth config, got non-nil")
 			}
 
 			// Test UseClientAuthorization method
@@ -195,15 +184,16 @@ func TestInitialize(t *testing.T) {
 
 			// Test GetClient with accessToken for client OAuth scenarios
 			if tc.wantClientOAuth {
-				client, err := gdaSrc.GetClient(ctx, "dummy-token")
+				client, cleanup, err := gdaSrc.GetClient(ctx, "dummy-token")
 				if err != nil {
 					t.Fatalf("GetClient with token failed: %v", err)
 				}
+				defer cleanup()
 				if client == nil {
 					t.Fatal("expected non-nil HTTP client from GetClient with token, got nil")
 				}
 				// Ensure passing empty token with UseClientOAuth enabled returns error
-				_, err = gdaSrc.GetClient(ctx, "")
+				_, _, err = gdaSrc.GetClient(ctx, "")
 				if err == nil || err.Error() != "client-side OAuth is enabled but no access token was provided" {
 					t.Errorf("expected 'client-side OAuth is enabled but no access token was provided' error, got: %v", err)
 				}

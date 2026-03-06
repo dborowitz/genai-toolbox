@@ -16,6 +16,9 @@ details on how to connect your AI tools (IDEs) to databases via Toolbox and MCP.
 {{< notice tip >}}
 You can now use `--prebuilt` along `--tools-file`, `--tools-files`, or
 `--tools-folder` to combine prebuilt configs with custom tools.
+
+You can also combine multiple prebuilt configs.
+
 See [Usage Examples](../reference/cli.md#examples).
 {{< /notice >}}
 
@@ -41,6 +44,12 @@ See [Usage Examples](../reference/cli.md#examples).
 *   **Tools:**
     *   `execute_sql`: Executes a SQL query.
     *   `list_tables`: Lists tables in the database.
+    *   `list_active_queries`: Lists ongoing queries.
+    *   `list_available_extensions`: Discover all PostgreSQL extensions available for installation.
+    *   `list_installed_extensions`: List all installed PostgreSQL extensions.
+    *   `long_running_transactions`: Identifies and lists database transactions that exceed a specified time limit.
+    *   `list_locks`: Identifies all locks held by active processes.
+    *   `replication_stats`: Lists each replica's process ID and sync state.
     *   `list_autovacuum_configurations`: Lists autovacuum configurations in the
         database.
     *   `list_memory_configurations`: Lists memory-related configurations in the
@@ -51,17 +60,21 @@ See [Usage Examples](../reference/cli.md#examples).
     *   `get_query_plan`: Generate the execution plan of a statement.
     *   `list_views`: Lists views in the database from pg_views with a default
         limit of 50 rows. Returns schemaname, viewname and the ownername.
-    *   `list_schemas`: Lists schemas in the database. 
-    *   `database_overview`: Fetches the current state of the PostgreSQL server. 
-    *   `list_triggers`: Lists triggers in the database. 
+    *   `list_schemas`: Lists schemas in the database.
+    *   `database_overview`: Fetches the current state of the PostgreSQL server.
+    *   `list_triggers`: Lists triggers in the database.
     *   `list_indexes`: List available user indexes in a PostgreSQL database.
     *   `list_sequences`: List sequences in a PostgreSQL database.
+    *   `list_query_stats`: Lists query statistics.
+    *   `get_column_cardinality`: Gets column cardinality.
+    *   `list_table_stats`: Lists table statistics.
     *   `list_publication_tables`: List publication tables in a PostgreSQL database.
     *   `list_tablespaces`: Lists tablespaces in the database.
     *   `list_pg_settings`: List configuration parameters for the PostgreSQL server.
     *   `list_database_stats`: Lists the key performance and activity statistics for
         each database in the AlloyDB instance.
-    *   `list_roles`: Lists all the user-created roles in PostgreSQL database.  
+    *   `list_roles`: Lists all the user-created roles in PostgreSQL database.
+    *   `list_stored_procedure`: Lists stored procedures.
 
 ## AlloyDB Postgres Admin
 
@@ -96,6 +109,53 @@ See [Usage Examples](../reference/cli.md#examples).
     *   `get_query_metrics`: Fetches query level cloud monitoring data
         (timeseries metrics) for queries running in an AlloyDB instance using a
         PromQL query.
+
+## AlloyDB Omni
+
+*   `--prebuilt` value: `alloydb-omni`
+*   **Environment Variables:**
+    *   `ALLOYDB_OMNI_HOST`: (Optional) The hostname or IP address (Default: localhost).
+    *   `ALLOYDB_OMNI_PORT`: (Optional) The port number (Default: 5432).
+    *   `ALLOYDB_OMNI_DATABASE`: The name of the database to connect to.
+    *   `ALLOYDB_OMNI_USER`: The database username.
+    *   `ALLOYDB_OMNI_PASSWORD`: (Optional) The password for the database user.
+    *   `ALLOYDB_OMNI_QUERY_PARAMS`: (Optional) Connection query parameters.
+*   **Tools:**
+    *   `execute_sql`: Executes a SQL query.
+    *   `list_tables`: Lists tables in the database.
+    *   `list_active_queries`: Lists ongoing queries.
+    *   `list_available_extensions`: Discover all PostgreSQL extensions available for installation.
+    *   `list_installed_extensions`: List all installed PostgreSQL extensions.
+    *   `long_running_transactions`: Identifies and lists database transactions that exceed a specified time limit.
+    *   `list_locks`: Identifies all locks held by active processes.
+    *   `replication_stats`: Lists each replica's process ID and sync state.
+    *   `list_autovacuum_configurations`: Lists autovacuum configurations in the
+        database.
+    *   `list_columnar_configurations`: List AlloyDB Omni columnar-related configurations.
+    *   `list_columnar_recommended_columns`: Lists columns that AlloyDB Omni recommends adding to the columnar engine.
+    *   `list_memory_configurations`: Lists memory-related configurations in the
+        database.
+    *   `list_top_bloated_tables`: List top bloated tables in the database.
+    *   `list_replication_slots`: Lists replication slots in the database.
+    *   `list_invalid_indexes`: Lists invalid indexes in the database.
+    *   `get_query_plan`: Generate the execution plan of a statement.
+    *   `list_views`: Lists views in the database from pg_views with a default
+        limit of 50 rows. Returns schemaname, viewname and the ownername.
+    *   `list_schemas`: Lists schemas in the database.
+    *   `database_overview`: Fetches the current state of the PostgreSQL server.
+    *   `list_triggers`: Lists triggers in the database.
+    *   `list_indexes`: List available user indexes in a PostgreSQL database.
+    *   `list_sequences`: List sequences in a PostgreSQL database.
+    *   `list_query_stats`: Lists query statistics.
+    *   `get_column_cardinality`: Gets column cardinality.
+    *   `list_table_stats`: Lists table statistics.
+    *   `list_publication_tables`: List publication tables in a PostgreSQL database.
+    *   `list_tablespaces`: Lists tablespaces in the database.
+    *   `list_pg_settings`: List configuration parameters for the PostgreSQL server.
+    *   `list_database_stats`: Lists the key performance and activity statistics for
+        each database in the AlloyDB instance.
+    *   `list_roles`: Lists all the user-created roles in PostgreSQL database.
+    *   `list_stored_procedure`: Lists stored procedures.
 
 ## BigQuery
 
@@ -132,6 +192,21 @@ See [Usage Examples](../reference/cli.md#examples).
     *   `list_dataset_ids`: Lists datasets.
     *   `list_table_ids`: Lists tables.
     *   `search_catalog`: Search for entries based on the provided query.
+
+## ClickHouse
+
+*   `--prebuilt` value: `clickhouse`
+*   **Environment Variables:**
+    *   `CLICKHOUSE_HOST`: The hostname or IP address of the ClickHouse server.
+    *   `CLICKHOUSE_PORT`: The port number of the ClickHouse server.
+    *   `CLICKHOUSE_USER`: The database username.
+    *   `CLICKHOUSE_PASSWORD`: The password for the database user.
+    *   `CLICKHOUSE_DATABASE`: The name of the database to connect to.
+    *   `CLICKHOUSE_PROTOCOL`: The protocol to use (e.g., http).
+*   **Tools:**
+    *   `execute_sql`: Use this tool to execute SQL.
+    *   `list_databases`: Use this tool to list all databases in ClickHouse.
+    *   `list_tables`: Use this tool to list all tables in a specific ClickHouse database.
 
 ## Cloud SQL for MySQL
 
@@ -187,12 +262,14 @@ See [Usage Examples](../reference/cli.md#examples).
         manage existing resources.
         * All `viewer` tools
         * `create_database`
+        * `create_backup`
     *   **Cloud SQL Admin** (`roles/cloudsql.admin`): Provides full control over
         all resources.
         * All `editor` and `viewer` tools
         * `create_instance`
         * `create_user`
         * `clone_instance`
+        * `restore_backup`
 
 *   **Tools:**
     *   `create_instance`: Creates a new Cloud SQL for MySQL instance.
@@ -203,6 +280,8 @@ See [Usage Examples](../reference/cli.md#examples).
     *   `create_user`: Creates a new user in a Cloud SQL instance.
     *   `wait_for_operation`: Waits for a Cloud SQL operation to complete.
     *   `clone_instance`: Creates a clone for an existing Cloud SQL for MySQL instance.
+    *   `create_backup`: Creates a backup on a Cloud SQL instance.
+    *   `restore_backup`: Restores a backup of a Cloud SQL instance.
 
 ## Cloud SQL for PostgreSQL
 
@@ -226,6 +305,12 @@ See [Usage Examples](../reference/cli.md#examples).
 *   **Tools:**
     *   `execute_sql`: Executes a SQL query.
     *   `list_tables`: Lists tables in the database.
+    *   `list_active_queries`: Lists ongoing queries.
+    *   `list_available_extensions`: Discover all PostgreSQL extensions available for installation.
+    *   `list_installed_extensions`: List all installed PostgreSQL extensions.
+    *   `long_running_transactions`: Identifies and lists database transactions that exceed a specified time limit.
+    *   `list_locks`: Identifies all locks held by active processes.
+    *   `replication_stats`: Lists each replica's process ID and sync state.
     *   `list_autovacuum_configurations`: Lists autovacuum configurations in the
         database.
     *   `list_memory_configurations`: Lists memory-related configurations in the
@@ -236,17 +321,21 @@ See [Usage Examples](../reference/cli.md#examples).
     *   `get_query_plan`: Generate the execution plan of a statement.
     *   `list_views`: Lists views in the database from pg_views with a default
         limit of 50 rows. Returns schemaname, viewname and the ownername.
-    *   `list_schemas`: Lists schemas in the database. 
-    *   `database_overview`: Fetches the current state of the PostgreSQL server. 
-    *   `list_triggers`: Lists triggers in the database. 
+    *   `list_schemas`: Lists schemas in the database.
+    *   `database_overview`: Fetches the current state of the PostgreSQL server.
+    *   `list_triggers`: Lists triggers in the database.
     *   `list_indexes`: List available user indexes in a PostgreSQL database.
     *   `list_sequences`: List sequences in a PostgreSQL database.
+    *   `list_query_stats`: Lists query statistics.
+    *   `get_column_cardinality`: Gets column cardinality.
+    *   `list_table_stats`: Lists table statistics.
     *   `list_publication_tables`: List publication tables in a PostgreSQL database.
     *   `list_tablespaces`: Lists tablespaces in the database.
     *   `list_pg_settings`: List configuration parameters for the PostgreSQL server.
     *   `list_database_stats`: Lists the key performance and activity statistics for
         each database in the postgreSQL instance.
-    *   `list_roles`: Lists all the user-created roles in PostgreSQL database.  
+    *   `list_roles`: Lists all the user-created roles in PostgreSQL database.
+    *   `list_stored_procedure`: Lists stored procedures.
 
 ## Cloud SQL for PostgreSQL Observability
 
@@ -275,12 +364,14 @@ See [Usage Examples](../reference/cli.md#examples).
         manage existing resources.
         * All `viewer` tools
         * `create_database`
+        * `create_backup`
     *   **Cloud SQL Admin** (`roles/cloudsql.admin`): Provides full control over
         all resources.
         * All `editor` and `viewer` tools
         * `create_instance`
         * `create_user`
         * `clone_instance`
+        * `restore_backup`
 *   **Tools:**
     *   `create_instance`: Creates a new Cloud SQL for PostgreSQL instance.
     *   `get_instance`: Gets information about a Cloud SQL instance.
@@ -290,6 +381,9 @@ See [Usage Examples](../reference/cli.md#examples).
     *   `create_user`: Creates a new user in a Cloud SQL instance.
     *   `wait_for_operation`: Waits for a Cloud SQL operation to complete.
     *   `clone_instance`: Creates a clone for an existing Cloud SQL for PostgreSQL instance.
+    *   `postgres_upgrade_precheck`: Performs a precheck for a major version upgrade of a Cloud SQL for PostgreSQL instance.
+    *   `create_backup`: Creates a backup on a Cloud SQL instance.
+    *   `restore_backup`: Restores a backup of a Cloud SQL instance.
 
 ## Cloud SQL for SQL Server
 
@@ -336,12 +430,14 @@ See [Usage Examples](../reference/cli.md#examples).
         manage existing resources.
         * All `viewer` tools
         * `create_database`
+        * `create_backup`
     *   **Cloud SQL Admin** (`roles/cloudsql.admin`): Provides full control over
         all resources.
         * All `editor` and `viewer` tools
         * `create_instance`
         * `create_user`
         * `clone_instance`
+        * `restore_backup`
 *   **Tools:**
     *   `create_instance`: Creates a new Cloud SQL for SQL Server instance.
     *   `get_instance`: Gets information about a Cloud SQL instance.
@@ -351,6 +447,8 @@ See [Usage Examples](../reference/cli.md#examples).
     *   `create_user`: Creates a new user in a Cloud SQL instance.
     *   `wait_for_operation`: Waits for a Cloud SQL operation to complete.
     *   `clone_instance`: Creates a clone for an existing Cloud SQL for SQL Server instance.
+    *   `create_backup`: Creates a backup on a Cloud SQL instance.
+    *   `restore_backup`: Restores a backup of a Cloud SQL instance.
 
 ## Dataplex
 
@@ -362,11 +460,34 @@ See [Usage Examples](../reference/cli.md#examples).
         entries.
     *   **Dataplex Editor** (`roles/dataplex.editor`) to modify entries.
 *   **Tools:**
-    *   `dataplex_search_entries`: Searches for entries in Dataplex Catalog.
-    *   `dataplex_lookup_entry`: Retrieves a specific entry from Dataplex
+    *   `search_entries`: Searches for entries in Dataplex Catalog.
+    *   `lookup_entry`: Retrieves a specific entry from Dataplex
         Catalog.
-    *   `dataplex_search_aspect_types`: Finds aspect types relevant to the
+    *   `search_aspect_types`: Finds aspect types relevant to the
         query.
+
+## Dataproc
+
+*   `--prebuilt` value: `dataproc`
+*   **Environment Variables:**
+    *   `DATAPROC_PROJECT`: The GCP project ID.
+    *   `DATAPROC_REGION`: The Dataproc region.
+*   **Permissions:**
+    *   **Dataproc Viewer** (`roles/dataproc.viewer`) to examine clusters and jobs.
+*   **Tools:**
+    *   `list_clusters`: Lists Dataproc clusters.
+    *   `get_cluster`: Gets a Dataproc cluster.
+    *   `list_jobs`: Lists Dataproc jobs.
+    *   `get_job`: Gets a Dataproc job.
+
+## Elasticsearch
+
+*   `--prebuilt` value: `elasticsearch`
+*   **Environment Variables:**
+    *   `ELASTICSEARCH_HOST`: The hostname or IP address of the Elasticsearch server.
+    *   `ELASTICSEARCH_APIKEY`: The API key for authentication.
+*   **Tools:**
+    *   `execute_esql_query`: Use this tool to execute ES|QL queries.
 
 ## Firestore
 
@@ -426,6 +547,23 @@ See [Usage Examples](../reference/cli.md#examples).
     *   `add_dashboard_element`: Adds a tile to a dashboard.
     *   `add_dashboard_filter`: Adds a filter to a dashboard.
     *   `generate_embed_url`: Generate an embed url for content.
+
+## Looker Dev
+
+*   `--prebuilt` value: `looker-dev`
+*   **Environment Variables:**
+    *   `LOOKER_BASE_URL`: The URL of your Looker instance.
+    *   `LOOKER_CLIENT_ID`: The client ID for the Looker API.
+    *   `LOOKER_CLIENT_SECRET`: The client secret for the Looker API.
+    *   `LOOKER_VERIFY_SSL`: Whether to verify SSL certificates.
+    *   `LOOKER_USE_CLIENT_OAUTH`: Whether to use OAuth for authentication.
+    *   `LOOKER_SHOW_HIDDEN_MODELS`: Whether to show hidden models.
+    *   `LOOKER_SHOW_HIDDEN_EXPLORES`: Whether to show hidden explores.
+    *   `LOOKER_SHOW_HIDDEN_FIELDS`: Whether to show hidden fields.
+*   **Permissions:**
+    *   A Looker account with permissions to access the desired projects
+        and LookML is required.
+*   **Tools:**
     *   `health_pulse`: Test the health of a Looker instance.
     *   `health_analyze`: Analyze the LookML usage of a Looker instance.
     *   `health_vacuum`: Suggest LookML elements that can be removed.
@@ -436,11 +574,18 @@ See [Usage Examples](../reference/cli.md#examples).
     *   `create_project_file`: Create a new LookML file.
     *   `update_project_file`: Update an existing LookML file.
     *   `delete_project_file`: Delete a LookML file.
+    *   `get_project_directories`: Retrieves a list of project directories for a given LookML project.
+    *   `create_project_directory`: Creates a new directory within a specified LookML project.
+    *   `delete_project_directory`: Deletes a directory from a specified LookML project.
+    *   `validate_project`: Check the syntax of a LookML project.
     *   `get_connections`: Get the available connections in a Looker instance.
     *   `get_connection_schemas`: Get the available schemas in a connection.
     *   `get_connection_databases`: Get the available databases in a connection.
     *   `get_connection_tables`: Get the available tables in a connection.
     *   `get_connection_table_columns`: Get the available columns for a table.
+    *   `get_lookml_tests`: Retrieves a list of available LookML tests for a project.
+    *   `run_lookml_tests`: Executes specific LookML tests within a project.
+    *   `create_view_from_table`: Generates boilerplate LookML views directly from the database schema.
 
 ## Looker Conversational Analytics
 
@@ -483,6 +628,19 @@ See [Usage Examples](../reference/cli.md#examples).
 *   **Tools:**
     *   `execute_sql`: Executes a SQL query.
     *   `list_tables`: Lists tables in the database.
+
+## MindsDB
+
+*   `--prebuilt` value: `mindsdb`
+*   **Environment Variables:**
+    *   `MINDSDB_HOST`: The hostname or IP address of the MindsDB server.
+    *   `MINDSDB_PORT`: The port number of the MindsDB server.
+    *   `MINDSDB_DATABASE`: The name of the database to connect to.
+    *   `MINDSDB_USER`: The database username.
+    *   `MINDSDB_PASS`: The password for the database user.
+*   **Tools:**
+    *   `mindsdb-execute-sql`: Execute SQL queries directly on MindsDB database.
+    *   `mindsdb-sql`: Execute parameterized SQL queries on MindsDB database.
 
 ## MySQL
 
@@ -539,6 +697,12 @@ See [Usage Examples](../reference/cli.md#examples).
 *   **Tools:**
     *   `execute_sql`: Executes a SQL query.
     *   `list_tables`: Lists tables in the database.
+    *   `list_active_queries`: Lists ongoing queries.
+    *   `list_available_extensions`: Discover all PostgreSQL extensions available for installation.
+    *   `list_installed_extensions`: List all installed PostgreSQL extensions.
+    *   `long_running_transactions`: Identifies and lists database transactions that exceed a specified time limit.
+    *   `list_locks`: Identifies all locks held by active processes.
+    *   `replication_stats`: Lists each replica's process ID and sync state.
     *   `list_autovacuum_configurations`: Lists autovacuum configurations in the
         database.
     *   `list_memory_configurations`: Lists memory-related configurations in the
@@ -549,17 +713,21 @@ See [Usage Examples](../reference/cli.md#examples).
     *   `get_query_plan`: Generate the execution plan of a statement.
     *   `list_views`: Lists views in the database from pg_views with a default
         limit of 50 rows. Returns schemaname, viewname and the ownername.
-    *   `list_schemas`: Lists schemas in the database. 
-    *   `database_overview`: Fetches the current state of the PostgreSQL server. 
-    *   `list_triggers`: Lists triggers in the database. 
+    *   `list_schemas`: Lists schemas in the database.
+    *   `database_overview`: Fetches the current state of the PostgreSQL server.
+    *   `list_triggers`: Lists triggers in the database.
     *   `list_indexes`: List available user indexes in a PostgreSQL database.
     *   `list_sequences`: List sequences in a PostgreSQL database.
+    *   `list_query_stats`: Lists query statistics.
+    *   `get_column_cardinality`: Gets column cardinality.
+    *   `list_table_stats`: Lists table statistics.
     *   `list_publication_tables`: List publication tables in a PostgreSQL database.
     *   `list_tablespaces`: Lists tablespaces in the database.
     *   `list_pg_settings`: List configuration parameters for the PostgreSQL server.
     *   `list_database_stats`: Lists the key performance and activity statistics for
         each database in the PostgreSQL server.
-    *   `list_roles`: Lists all the user-created roles in PostgreSQL database.  
+    *   `list_roles`: Lists all the user-created roles in PostgreSQL database.
+    *   `list_stored_procedure`: Lists stored procedures.
 
 ## Google Cloud Serverless for Apache Spark
 
@@ -574,6 +742,40 @@ See [Usage Examples](../reference/cli.md#examples).
         view serverless batches.
 *   **Tools:**
     *   `list_batches`: Lists Spark batches.
+    *   `get_batch`: Gets information about a Spark batch.
+    *   `cancel_batch`: Cancels a Spark batch.
+    *   `create_pyspark_batch`: Creates a PySpark batch.
+    *   `create_spark_batch`: Creates a Spark batch.
+    *   `list_sessions`: Lists Spark sessions.
+    *   `get_session`: Gets a Spark session.
+
+## SingleStore
+
+*   `--prebuilt` value: `singlestore`
+*   **Environment Variables:**
+    *   `SINGLESTORE_HOST`: The hostname or IP address of the SingleStore server.
+    *   `SINGLESTORE_PORT`: The port number of the SingleStore server.
+    *   `SINGLESTORE_DATABASE`: The name of the database to connect to.
+    *   `SINGLESTORE_USER`: The database username.
+    *   `SINGLESTORE_PASSWORD`: The password for the database user.
+*   **Tools:**
+    *   `execute_sql`: Use this tool to execute SQL.
+    *   `list_tables`: Lists detailed schema information for user-created tables.
+
+## Snowflake
+
+*   `--prebuilt` value: `snowflake`
+*   **Environment Variables:**
+    *   `SNOWFLAKE_ACCOUNT`: The Snowflake account.
+    *   `SNOWFLAKE_USER`: The database username.
+    *   `SNOWFLAKE_PASSWORD`: The password for the database user.
+    *   `SNOWFLAKE_DATABASE`: The name of the database to connect to.
+    *   `SNOWFLAKE_SCHEMA`: The schema name.
+    *   `SNOWFLAKE_WAREHOUSE`: The warehouse name.
+    *   `SNOWFLAKE_ROLE`: The role name.
+*   **Tools:**
+    *   `execute_sql`: Use this tool to execute SQL.
+    *   `list_tables`: Lists detailed schema information for user-created tables.
 
 ## Spanner (GoogleSQL dialect)
 
