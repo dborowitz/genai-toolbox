@@ -308,6 +308,14 @@ func (s *Source) GetBatch(ctx context.Context, name string) (map[string]any, err
 	return wrappedResult, nil
 }
 
+// SessionTemplate represents a single session template.
+type SessionTemplate struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Creator     string `json:"creator"`
+	CreateTime  string `json:"createTime"`
+}
+
 func (s *Source) GetSessionTemplate(ctx context.Context, name string) (map[string]any, error) {
 	client := s.GetSessionTemplateControllerClient()
 	req := &dataprocpb.GetSessionTemplateRequest{
@@ -334,6 +342,22 @@ func (s *Source) GetSessionTemplate(ctx context.Context, name string) (map[strin
 	}
 
 	return wrappedResult, nil
+}
+
+// ToSessionTemplates converts a slice of protobuf SessionTemplate messages to a slice of SessionTemplate structs.
+func ToSessionTemplates(sessionTemplatePbs []*dataprocpb.SessionTemplate) ([]SessionTemplate, error) {
+	sessionTemplates := make([]SessionTemplate, 0, len(sessionTemplatePbs))
+	for _, sessionTemplatePb := range sessionTemplatePbs {
+
+		sessionTemplate := SessionTemplate{
+			Name:        sessionTemplatePb.Name,
+			Description: sessionTemplatePb.Description,
+			Creator:     sessionTemplatePb.Creator,
+			CreateTime:  sessionTemplatePb.CreateTime.AsTime().Format(time.RFC3339),
+		}
+		sessionTemplates = append(sessionTemplates, sessionTemplate)
+	}
+	return sessionTemplates, nil
 }
 
 // ListSessionsResponse is the response from the list sessions API.
