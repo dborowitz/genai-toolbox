@@ -140,7 +140,7 @@ func (s *Source) GetOperationsClient(ctx context.Context) (*longrunning.Operatio
 }
 
 func (s *Source) Close() error {
-	return errors.Join(s.Client.Close(), s.SessionClient.Close(), s.SessionTemplateClient.Close(), s.OpsClient.Close())
+	return errors.Join(s.BatchClient.Close(), s.SessionClient.Close(), s.SessionTemplateClient.Close(), s.OpsClient.Close())
 }
 
 func (s *Source) CancelOperation(ctx context.Context, operation string) (any, error) {
