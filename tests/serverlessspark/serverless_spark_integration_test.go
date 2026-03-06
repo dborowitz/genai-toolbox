@@ -405,6 +405,56 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 			})
 		})
 
+		t.Run("get-session-template", func(t *testing.T) {
+			t.Parallel()
+			// Try to find an existing session template to test success case
+			sessionTemplates := listSessionTemplatesRpc(t, sessionTemplateClient, ctx, "", 1, false)
+			if len(sessionTemplates) > 0 {
+				fullName := sessionTemplates[0].Name
+				t.Run("success", func(t *testing.T) {
+					t.Parallel()
+					runGetSessionTemplateTest(t, sessionTemplateClient, ctx, fullName)
+				})
+				t.Run("auth", func(t *testing.T) {
+					t.Parallel()
+					runAuthTest(t, "get-session-template-with-auth", map[string]any{"name": shortName(fullName)}, http.StatusOK)
+				})
+			}
+
+			t.Run("errors", func(t *testing.T) {
+				t.Parallel()
+				missingSessionTemplateFullName := fmt.Sprintf("projects/%s/locations/%s/sessionTemplates/INVALID_SESSION_TEMPLATE", serverlessSparkProject, serverlessSparkLocation)
+				tcs := []struct {
+					name     string
+					toolName string
+					request  map[string]any
+					wantCode int
+					wantMsg  string
+				}{
+					{
+						name:     "missing session template",
+						toolName: "get-session-template",
+						request:  map[string]any{"name": "missingSessionTemplateFullName"},
+						wantCode: http.StatusOK,
+						wantMsg:  fmt.Sprintf("Not found: SessionTemplate projects/%s/locations/%s/sessionTemplates/INVALID_SESSION_TEMPLATE", serverlessSparkProject, serverlessSparkLocation),
+					},
+					{
+						name:     "full session name",
+						toolName: "get-session-template",
+						request:  map[string]any{"name": missingSessionTemplateFullName},
+						wantCode: http.StatusOK,
+						wantMsg:  fmt.Sprintf("name must be a short session template name without '/': %s", missingSessionTemplateFullName),
+					},
+				}
+				for _, tc := range tcs {
+					t.Run(tc.name, func(t *testing.T) {
+						t.Parallel()
+						testError(t, tc.toolName, tc.request, tc.wantCode, tc.wantMsg)
+					})
+				}
+			})
+		})
+
 		t.Run("create-pyspark-batch", func(t *testing.T) {
 			t.Parallel()
 
@@ -1159,7 +1209,7 @@ func testError(t *testing.T, toolName string, request map[string]any, wantCode i
 	}
 
 	if !strings.Contains(resultStr, wantMsg) {
-		t.Fatalf("result string %q does not contain expected message %q", resultStr, wantMsg)
+		t.Fatalf("result string %q doe_REGIONs not contain expected message %q", resultStr, wantMsg)
 	}
 }
 
@@ -1325,5 +1375,93 @@ func runGetSessionTest(t *testing.T, client *dataproc.SessionControllerClient, c
 	if !cmp.Equal(&session, &wantSessionPb, protocmp.Transform()) {
 		diff := cmp.Diff(&session, &wantSessionPb, protocmp.Transform())
 		t.Errorf("GetSession() returned diff (-got +want):\n%s", diff)
+	}
+}
+
+func listSessionTemplatesRpc(t *testing.T, client *dataproc.SessionTemplateControllerClient, ctx context.Context, filter string, n int, exact bool) []serverlessspark.SessionTemplate {
+	parent := fmt.Sprintf("projects/%s/locations/%s", serverlessSparkProject, serverlessSparkLocation)
+	req := &dataprocpb.ListSessionTemplatesRequest{
+		Parent:   parent,
+		PageSize: int32(n),
+	}
+	if filter != "" {
+		req.Filter = filter
+	}
+
+	it := client.ListSessionTemplates(ctx, req)
+	pager := iterator.NewPager(it, n, "")
+	var sessionTemplatePbs []*dataprocpb.SessionTemplate
+	_, err := pager.NextPage(&sessionTemplatePbs)
+	if err != nil {
+		t.Fatalf("failed to list session templates: %s", err)
+	}
+	if exact && len(sessionTemplatePbs) != n {
+		t.Fatalf("expected exactly %d templates, got %d", n, len(sessionTemplatePbs))
+	}
+	if !exact && (len(sessionTemplatePbs) == 0 || len(sessionTemplatePbs) > n) {
+		t.Fatalf("expected between 1 and %d session templates, got %d", n, len(sessionTemplatePbs))
+	}
+	sessionTemplates, err := serverlessspark.ToSessionTemplates(sessionTemplatePbs)
+	if err != nil {
+		t.Fatalf("failed to convert session templates to JSON: %v", err)
+	}
+
+	return sessionTemplates
+}
+
+func runGetSessionTemplateTest(t *testing.T, client *dataproc.SessionTemplateControllerClient, ctx context.Context, fullName string) {
+	req := &dataprocpb.GetSessionTemplateRequest{
+		Name: fullName,
+	}
+	rawWantSessionTemplatePb, err := client.GetSessionTemplate(ctx, req)
+	if err != nil {
+		t.Fatalf("failed to get session template: %s", err)
+	}
+
+	jsonBytes, err := protojson.Marshal(rawWantSessionTemplatePb)
+	if err != nil {
+		t.Fatalf("failed to marshal session template to JSON: %s", err)
+	}
+	var wantSessionTemplatePb dataprocpb.SessionTemplate
+	if err := protojson.Unmarshal(jsonBytes, &wantSessionTemplatePb); err != nil {
+		t.Fatalf("error unmarshalling result: %s", err)
+	}
+
+	request := map[string]any{"name": shortName(fullName)}
+	resp, err := invokeTool("get-session-template", request, nil)
+	if err != nil {
+		t.Fatalf("invokeTool failed: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("response status code is not 200, got %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+	var body map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("error parsing response body: %v", err)
+	}
+	result, ok := body["result"].(string)
+	if !ok {
+		t.Fatalf("unable to find result in response body")
+	}
+	var wrappedResult map[string]any
+	if err := json.Unmarshal([]byte(result), &wrappedResult); err != nil {
+		t.Fatalf("error unmarshalling result: %s", err)
+	}
+
+	sessionTemplateJSON, err := json.Marshal(wrappedResult["sessionTemplate"])
+	if err != nil {
+		t.Fatalf("failed to marshal session template: %v", err)
+	}
+
+	var sessionTemplate dataprocpb.SessionTemplate
+	if err := protojson.Unmarshal(sessionTemplateJSON, &sessionTemplate); err != nil {
+		t.Fatalf("error unmarshalling session template from wrapped result: %s", err)
+	}
+
+	if !cmp.Equal(&sessionTemplate, &wantSessionTemplatePb, protocmp.Transform()) {
+		diff := cmp.Diff(&sessionTemplate, &wantSessionTemplatePb, protocmp.Transform())
+		t.Errorf("GetSessionTemplate() returned diff (-got +want):\n%s", diff)
 	}
 }
