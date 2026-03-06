@@ -1209,7 +1209,7 @@ func testError(t *testing.T, toolName string, request map[string]any, wantCode i
 	}
 
 	if !strings.Contains(resultStr, wantMsg) {
-		t.Fatalf("result string %q doe_REGIONs not contain expected message %q", resultStr, wantMsg)
+		t.Fatalf("result string %q does not contain expected message %q", resultStr, wantMsg)
 	}
 }
 
