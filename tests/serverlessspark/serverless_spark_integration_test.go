@@ -434,9 +434,9 @@ func TestServerlessSparkToolEndpoints(t *testing.T) {
 					{
 						name:     "missing session template",
 						toolName: "get-session-template",
-						request:  map[string]any{"name": "missingSessionTemplateFullName"},
+						request:  map[string]any{"name": "INVALID_SESSION_TEMPLATE"},
 						wantCode: http.StatusOK,
-						wantMsg:  fmt.Sprintf("Not found: SessionTemplate projects/%s/locations/%s/sessionTemplates/INVALID_SESSION_TEMPLATE", serverlessSparkProject, serverlessSparkLocation),
+						wantMsg:  fmt.Sprintf("Not found: Session Template projects/%s/locations/%s/sessionTemplates/INVALID_SESSION_TEMPLATE", serverlessSparkProject, serverlessSparkLocation),
 					},
 					{
 						name:     "full session name",
